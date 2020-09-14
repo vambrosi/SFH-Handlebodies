@@ -138,18 +138,30 @@ class Genus2Handlebody:
                 points_by_rank[rank] = [point]
         return points_by_rank
 
-    def SFH_plot(self):
+    def SFH_plot(self, **kwargs):
         if self.SFH_spinc == None:
             self.SFH_polytope()
 
         points_by_rank = self.SFH_by_rank()
+
         x_max = max((point[0] for point in self.SFH_spinc))
         x_min = min((point[0] for point in self.SFH_spinc))
         y_max = max((point[1] for point in self.SFH_spinc))
         y_min = min((point[1] for point in self.SFH_spinc))
 
-        max_both = max(x_max, y_max)
-        min_both = min(x_min, y_min)
+        if not 'xlim' in kwargs:
+            x_max = max((point[0] for point in self.SFH_spinc))
+            x_min = min((point[0] for point in self.SFH_spinc))
+            xlim = (x_min-1, x_max+1)
+        else:
+            xlim = kwargs['xlim']
+        
+        if not 'ylim' in kwargs:
+            y_max = max((point[1] for point in self.SFH_spinc))
+            y_min = min((point[1] for point in self.SFH_spinc))
+            xlim = (y_min-1, y_max+1)
+        else:
+            ylim = kwargs['ylim']
 
         # plots = []
         # for rank in points_by_rank:
@@ -164,29 +176,27 @@ class Genus2Handlebody:
         # return join_plot
 
         fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(2,2), dpi=150)
-        ax.grid(linestyle='--', linewidth=0.5, alpha=0.5, zorder=0.0)
-        ax.set_xticks([x for x in range(min_both,max_both+1)])
-        ax.set_yticks([x for x in range(min_both,max_both+1)])
+        cm = plt.cm.get_cmap('tab10')
 
         for rank in points_by_rank:
             x = [point[0] for point in points_by_rank[rank]]
             y = [point[1] for point in points_by_rank[rank]]
             latex_rank = f'${rank}$'
-            ax.scatter(x, y, marker=latex_rank)
+            ax.scatter(x, y, marker=latex_rank, color=cm.colors[rank-1])
 
         x, y = [], []
-        for xindex in range(min_both, max_both+1):
-            for yindex in range(min_both, max_both+1):
+        for xindex in range(xlim[0]+1, xlim[1]):
+            for yindex in range(ylim[0]+1, ylim[1]):
                 if not (xindex, yindex) in self.SFH_spinc:
                     x.append(xindex)
                     y.append(yindex)
 
         ax.scatter(x, y, marker='.', color='black', s=0.5, alpha=0.5)
-
-        ax.set_xlim(min_both-1, max_both+1)
-        ax.set_ylim(min_both-1, max_both+1)
         ax.set_axis_off()
-        plt.show()
+
+        ax.set(**kwargs)
+        ax.set(xlim=xlim, ylim=ylim)
+        return ax
 
 class SuturedHandlebody: # not working yet
     def __init__(self, graph_dict, vertices=None):
