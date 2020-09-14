@@ -159,7 +159,7 @@ class Genus2Handlebody:
         if not 'ylim' in kwargs:
             y_max = max((point[1] for point in self.SFH_spinc))
             y_min = min((point[1] for point in self.SFH_spinc))
-            xlim = (y_min-1, y_max+1)
+            ylim = (y_min-1, y_max+1)
         else:
             ylim = kwargs['ylim']
 
@@ -176,13 +176,12 @@ class Genus2Handlebody:
         # return join_plot
 
         fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(2,2), dpi=150)
-        cm = plt.cm.get_cmap('tab10')
 
         for rank in points_by_rank:
             x = [point[0] for point in points_by_rank[rank]]
             y = [point[1] for point in points_by_rank[rank]]
             latex_rank = f'${rank}$'
-            ax.scatter(x, y, marker=latex_rank, color=cm.colors[rank-1])
+            ax.scatter(x, y, marker=latex_rank)
 
         x, y = [], []
         for xindex in range(xlim[0]+1, xlim[1]):
