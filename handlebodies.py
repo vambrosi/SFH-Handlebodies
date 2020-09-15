@@ -63,16 +63,6 @@ class Genus2Handlebody:
         self.SFH_rank = len(N.generators)
         return N, M
 
-    def does_SFH_work():
-        for r in range(1,3):
-            for s in range(1,4):
-                for t in range(1,4):
-                    H = Genus2Handlebody([(t+r+1,t), (r+s+1,r), (s+t+1,s)])
-                    M = H.SFH()
-                    if len(M.generators) != (r+1)*(t+1) + (t+r+1)*s:
-                        return False
-        return True
-
     def read_polytope_from_csv(self): # fix
         el = self.edge_labels
         name = f'{el[0][0]}-{el[0][1]} ' \
@@ -138,9 +128,9 @@ class Genus2Handlebody:
                 points_by_rank[rank] = [point]
         return points_by_rank
 
-    def SFH_plot(self, **kwargs):
+    def SFH_plot(self, load=True, **kwargs):
         if self.SFH_spinc == None:
-            self.SFH_polytope()
+            self.SFH_polytope(load, save=False)
 
         points_by_rank = self.SFH_by_rank()
 
@@ -196,6 +186,16 @@ class Genus2Handlebody:
         ax.set(**kwargs)
         ax.set(xlim=xlim, ylim=ylim)
         return ax
+
+def does_SFH_work():
+    for r in range(1,3):
+        for s in range(1,4):
+            for t in range(1,4):
+                H = Genus2Handlebody([(t+r+1,t), (r+s+1,r), (s+t+1,s)])
+                H.SFH()
+                if H.SFH_rank != (r+1)*(t+1) + (t+r+1)*s:
+                    return False
+    return True
 
 class SuturedHandlebody: # not working yet
     def __init__(self, graph_dict, vertices=None):

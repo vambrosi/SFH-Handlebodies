@@ -150,8 +150,15 @@ class SolidPairOfPants(MultiModule):
         self.action_types = [('D','left'), ('D','left'), ('D','left')]
         self.arcs = [arcs1, arcs2, arcs3]
         self.alpha_arcs = [(arcs1 - arcs2 + arcs3)//2, \
-                                (arcs2 - arcs3 + arcs1)//2, \
-                                (arcs3 - arcs1 + arcs2)//2]
+                           (arcs2 - arcs3 + arcs1)//2, \
+                           (arcs3 - arcs1 + arcs2)//2]
+
+        for arcs in self.alpha_arcs:
+            if arcs < 0:
+                raise Exception('Invalid parameters.')
+
+        if (arcs1 + arcs2 + arcs3) % 2:
+            raise Exception('Invalid parameters.')            
 
         self.generators = {}
         for S in range(1<<arcs1):
@@ -182,14 +189,26 @@ class SolidPairOfPants(MultiModule):
                 self.arrows[(S, T, U)][(S, T + a, V)] \
                     = [[I(S), H(T, T+a), H(U, V)]]
 
-            if (self.alpha_arcs[0] 
-                    and self.alpha_arcs[1] 
-                    and self.alpha_arcs[2]
-                    and crop(S, self.alpha_arcs[0], self.alpha_arcs[0]+1)==1
-                    and crop(T, self.alpha_arcs[1], self.alpha_arcs[1]+1)==1
-                    and crop(U, self.alpha_arcs[2], self.alpha_arcs[2]+1)==1):
-                A = S + (1 << self.alpha_arcs[0]-1)
-                B = T + (1 << self.alpha_arcs[1]-1)
-                C = U + (1 << self.alpha_arcs[2]-1)
-                self.arrows[(S, T, U)][(A, B, C)] \
-                    = [[H(S, A), H(T, B), H(U, C)]]
+        if (arcs1 + arcs2 + arcs3) % 2 == 0:
+            # add part above
+            a1 = 1<<self.alpha_arcs[0] >> 1
+            a2 = 1<<self.alpha_arcs[1] >> 1
+            a3 = 1<<self.alpha_arcs[2] >> 1
+
+            for S1 in range(a1):
+                for T1 in range(a2):
+                    for U1 in range(a3):
+                        S2 = d_complement(T1, self.alpha_arcs[1]-1)
+                        T2 = d_complement(U1, self.alpha_arcs[2]-1)
+                        U2 = d_complement(S1, self.alpha_arcs[0]-1)
+
+                        S = S1 + a1 + (S2 << self.alpha_arcs[0]+1)
+                        T = T1 + a2 + (T2 << self.alpha_arcs[1]+1)
+                        U = U1 + a3 + (U2 << self.alpha_arcs[2]+1)
+
+                        self.arrows[(S, T, U)][(S+a1, T+a2, U+a3)] \
+                            = [[H(S, S+a1), H(T, T+a2), H(U, U+a3)]]
+
+        else:
+            # 3 part differential + ?
+            pass
