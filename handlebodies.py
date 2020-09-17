@@ -8,6 +8,7 @@ from multimodules_constructors import (
 from box_tensor_product import box_tensor
 
 #from sage.plot.scatter_plot import scatter_plot
+import math
 import matplotlib.pyplot as plt
 import csv
 
@@ -128,7 +129,7 @@ class Genus2Handlebody:
                 points_by_rank[rank] = [point]
         return points_by_rank
 
-    def SFH_plot(self, load=True, **kwargs):
+    def SFH_plot(self, load=True, symmetric=True, **kwargs):
         if self.SFH_spinc == None:
             self.SFH_polytope(load, save=False)
 
@@ -138,6 +139,9 @@ class Genus2Handlebody:
         x_min = min((point[0] for point in self.SFH_spinc))
         y_max = max((point[1] for point in self.SFH_spinc))
         y_min = min((point[1] for point in self.SFH_spinc))
+
+        max_both = max(x_max, y_max)
+        min_both = max(x_min, y_min)
 
         if not 'xlim' in kwargs:
             x_max = max((point[0] for point in self.SFH_spinc))
@@ -165,26 +169,60 @@ class Genus2Handlebody:
         # join_plot.grid(True)
         # return join_plot
 
-        fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(2,2), dpi=150)
+        if symmetric:
+            fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(3,3), dpi=150)
 
-        for rank in points_by_rank:
-            x = [point[0] for point in points_by_rank[rank]]
-            y = [point[1] for point in points_by_rank[rank]]
-            latex_rank = f'${rank}$'
-            ax.scatter(x, y, marker=latex_rank)
+            s3 = math.sqrt(3)
+            for rank in points_by_rank:
+                xs_tmp = [point[0] for point in points_by_rank[rank]]
+                ys_tmp = [point[1] for point in points_by_rank[rank]]
+                ys = [-3*y - 1 for x, y in zip(xs_tmp, ys_tmp)]
+                xs = [s3*(2*x+y-1) for x, y in zip(xs_tmp, ys_tmp)]
+                latex_rank = f'${rank}$'
+                ax.scatter(xs, ys, marker=latex_rank)
 
-        x, y = [], []
-        for xindex in range(xlim[0]+1, xlim[1]):
-            for yindex in range(ylim[0]+1, ylim[1]):
-                if not (xindex, yindex) in self.SFH_spinc:
-                    x.append(xindex)
-                    y.append(yindex)
+            xs, ys = [], []
+            
+            x_avg = (xlim[0] + xlim[1])/2
+            y_avg = (ylim[0] + ylim[1])/2
 
-        ax.scatter(x, y, marker='.', color='black', s=0.5, alpha=0.5)
+            upper_lim = max(xlim[1]+y_avg, x_avg+ylim[1])
+            lower_lim = min(xlim[0]+y_avg, x_avg+ylim[0])
+
+            for x in range(xlim[0]+1, xlim[1]):
+                for y in range(ylim[0]+1, ylim[1]):
+                    if (not (x, y) in self.SFH_spinc
+                        and lower_lim < x+y < upper_lim):
+                        xs.append(s3 * (2*x+y-1))
+                        ys.append(-3*y - 1)
+
+            xlim_tmp, ylim_tmp = xlim, ylim
+            ylim = tuple(-3*y - 1 for x, y in zip(xlim_tmp, ylim_tmp))
+            xlim = tuple(s3*(2*x+y-1) for x, y in zip(xlim_tmp, ylim_tmp))
+
+        else:
+            fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(2,2), dpi=150)
+
+            for rank in points_by_rank:
+                xs = [point[0] for point in points_by_rank[rank]]
+                ys = [point[1] for point in points_by_rank[rank]]
+                latex_rank = f'${rank}$'
+                ax.scatter(xs, ys, marker=latex_rank)
+
+            xs, ys = [], []
+            for x in range(xlim[0]+1, xlim[1]):
+                for y in range(ylim[0]+1, ylim[1]):
+                    if not (x, y) in self.SFH_spinc:
+                        xs.append(x)
+                        ys.append(y)
+
+        ax.scatter(xs, ys, marker='.', color='black', s=0.5, alpha=0.5)
+
         ax.set_axis_off()
 
         ax.set(**kwargs)
         ax.set(xlim=xlim, ylim=ylim)
+        ax.set_aspect('equal')
         return ax
 
 def does_SFH_work():

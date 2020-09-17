@@ -11,6 +11,9 @@ from box_tensor_product import box_tensor
 # Strands Algebra related modules
 #-----------------------------------------------------------------------------#
 
+# Upper case letters represent sets (which correspond to idempotents).
+# Lower case letters represent elements of the corresponding set.
+
 def AlgebraHomology(n):
     '''Returns homology of the strands algebra as an AA Module.'''
     action_types = [('A','left'), ('A','right')]
@@ -76,9 +79,11 @@ def CFAA_id(arcs):
 def PartialDehnTwist(arcs, power, AA_id=None):
     action_types = [('D','left'), ('D','left')]
 
+    # If power is 0 the partial Dehn twist is the identity.
     if not power:
         return CFDD_id(arcs)
 
+    # Adding generators
     generators = {}
     n = arcs - 1
     for S in range(1 << n):
@@ -131,13 +136,14 @@ def PartialDehnTwist(arcs, power, AA_id=None):
                 B = A + a
                 arrows[(A,V)][(B, W)] = [[H(A,B), H(V,W)]]
 
+    # In case you precomputed AA_id
     if not isinstance(AA_id, MultiModule):
         AA_id = CFAA_id(arcs)
 
     DD = MultiModule(generators=generators, arrows=arrows,
-                       action_types=action_types)
+                     action_types=action_types)
+    
     DA = box_tensor(DD, 1, AA_id, 0)
-
     for i in range(power - 1):
         DD = box_tensor(DA, 1, DD, 0)
         DD.cancel_all_arrows()
@@ -147,6 +153,7 @@ def PartialDehnTwist(arcs, power, AA_id=None):
 
 class SolidPairOfPants(MultiModule):
     def __init__(self, arcs1, arcs2, arcs3):
+        # TO DO: less repetition on the for loops (to make it faster).
         self.action_types = [('D','left'), ('D','left'), ('D','left')]
         self.arcs = [arcs1, arcs2, arcs3]
         self.alpha_arcs = [(arcs1 - arcs2 + arcs3)//2, \
@@ -155,42 +162,56 @@ class SolidPairOfPants(MultiModule):
 
         for arcs in self.alpha_arcs:
             if arcs < 0:
+                # Temporary until I add the nongeneric case.
                 raise Exception('Invalid parameters.')
 
         if (arcs1 + arcs2 + arcs3) % 2:
-            raise Exception('Invalid parameters.')            
+            # Temporary while this case is not ready.
+            raise Exception('Invalid parameters.')
 
-        self.generators = {}
-        for S in range(1<<arcs1):
-            V = d_complement(crop(S, self.alpha_arcs[0]+1, arcs1), 
-                             self.alpha_arcs[1])
-            W = d_complement(crop(S,1,self.alpha_arcs[0]),
-                             self.alpha_arcs[0]) << self.alpha_arcs[2]
+            # Assumes you want the triangular region to be in R_+
+            # TO DO: add an extra parameter in case you want it to be in R_-
 
-            for i in range(1<<self.alpha_arcs[2]):
-                T = V + (i << self.alpha_arcs[1])
-                U = d_complement(i, self.alpha_arcs[2]) + W
-                self.generators[(S,T,U)] = [I(S), I(T), I(U)]
+            # Adding generators 
 
-        self.arrows = {gen:{} for gen in self.generators}
-        for (S, T, U) in self.generators:
-            for (V, b) in shift_ones(S, 1, self.alpha_arcs[0]):
-                a = reverse(b,self.alpha_arcs[0]) << self.alpha_arcs[2] >> 1
-                self.arrows[(S, T, U)][(V, T, U + a)] \
-                    = [[H(S, V), I(T), H(U, U+a)]]
+        else:
+            # Adding generators
+            self.generators = {}
+            for S in range(1<<arcs1):
+                V = d_complement(crop(S, self.alpha_arcs[0]+1, arcs1), 
+                                 self.alpha_arcs[1])
+                W = d_complement(crop(S,1,self.alpha_arcs[0]),
+                                 self.alpha_arcs[0]) << self.alpha_arcs[2]
 
-            for (V, b) in shift_ones(T, 1, self.alpha_arcs[1]):
-                a = reverse(b,self.alpha_arcs[1]) << self.alpha_arcs[0] >> 1
-                self.arrows[(S, T, U)][(S + a, V, U)] \
-                    = [[H(S, S+a), H(T, V), I(U)]]
+                for i in range(1<<self.alpha_arcs[2]):
+                    T = V + (i << self.alpha_arcs[1])
+                    U = d_complement(i, self.alpha_arcs[2]) + W
+                    self.generators[(S,T,U)] = [I(S), I(T), I(U)]
 
-            for (V, b) in shift_ones(U, 1, self.alpha_arcs[2]):
-                a = reverse(b,self.alpha_arcs[2]) << self.alpha_arcs[1] >> 1
-                self.arrows[(S, T, U)][(S, T + a, V)] \
-                    = [[I(S), H(T, T+a), H(U, V)]]
+            # Adding arrows
+            self.arrows = {gen:{} for gen in self.generators}
+            for (S, T, U) in self.generators:
+                # Octogonal regions between disk 2 and 0
+                for (V, b) in shift_ones(S, 1, self.alpha_arcs[0]):
+                    a = reverse(b,self.alpha_arcs[0])<<self.alpha_arcs[2] >> 1
+                    self.arrows[(S, T, U)][(V, T, U + a)] \
+                        = [[H(S, V), I(T), H(U, U+a)]]
 
-        if (arcs1 + arcs2 + arcs3) % 2 == 0:
-            # add part above
+                # Octogonal regions between disk 0 and 1
+                for (V, b) in shift_ones(T, 1, self.alpha_arcs[1]):
+                    a = reverse(b,self.alpha_arcs[1])<<self.alpha_arcs[0] >> 1
+                    self.arrows[(S, T, U)][(S + a, V, U)] \
+                        = [[H(S, S+a), H(T, V), I(U)]]
+
+                # Octogonal regions between disk 1 and 2
+                for (V, b) in shift_ones(U, 1, self.alpha_arcs[2]):
+                    a = reverse(b,self.alpha_arcs[2])<<self.alpha_arcs[1] >> 1
+                    self.arrows[(S, T, U)][(S, T + a, V)] \
+                        = [[I(S), H(T, T+a), H(U, V)]]
+
+            # Arrows corresponding to the middle region (with 12 sides).
+
+            # a1 a2 a3 represent the arcs that must occupied in the 
             a1 = 1<<self.alpha_arcs[0] >> 1
             a2 = 1<<self.alpha_arcs[1] >> 1
             a3 = 1<<self.alpha_arcs[2] >> 1
@@ -208,7 +229,3 @@ class SolidPairOfPants(MultiModule):
 
                         self.arrows[(S, T, U)][(S+a1, T+a2, U+a3)] \
                             = [[H(S, S+a1), H(T, T+a2), H(U, U+a3)]]
-
-        else:
-            # 3 part differential + ?
-            pass
