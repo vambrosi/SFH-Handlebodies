@@ -61,7 +61,6 @@ def CFDD_id(arcs):
     return MultiModule(generators=generators, arrows=arrows,
                        action_types=action_types)
 
-
 def CFAA_id(arcs):
     A = AlgebraHomology(arcs)
     A_dual = A.dual()
@@ -229,3 +228,12 @@ class SolidPairOfPants(MultiModule):
 
                         self.arrows[(S, T, U)][(S+a1, T+a2, U+a3)] \
                             = [[H(S, S+a1), H(T, T+a2), H(U, U+a3)]]
+
+        # Rank corresponding to each grading
+        self.ranks = {}
+        for gen in self.generators:
+            b = self.count_chords(gen)
+            try:
+                self.ranks[b] += 1
+            except KeyError:
+                self.ranks[b] = 1
