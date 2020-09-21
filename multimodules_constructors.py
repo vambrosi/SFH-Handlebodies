@@ -65,9 +65,8 @@ def CFAA_id(arcs):
     A = AlgebraHomology(arcs)
     A_dual = A.dual()
 
-    DA = box_tensor(CFDD_id(arcs).dual(), 0, 0, A)
-    AA_id = box_tensor(DA, 0, 1, A_dual)
-    AA_id.cancel_all_arrows()
+    DA = box_tensor(CFDD_id(arcs).dual(), 0, A, 0)
+    AA_id = box_tensor(DA, 0, A_dual, 1)
 
     return AA_id
 
@@ -79,7 +78,7 @@ def PartialDehnTwist(arcs, power, AA_id=None):
     action_types = [('D','left'), ('D','left')]
 
     # If power is 0 the partial Dehn twist is the identity.
-    if not power:
+    if power == 0 or arcs == 0:
         return CFDD_id(arcs)
 
     # Adding generators

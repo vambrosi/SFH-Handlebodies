@@ -4,7 +4,7 @@
 
 from multimodules import MultiModule
 from multimodules_constructors import (
-    AlgebraHomology, CFDD_id, PartialDehnTwist, SolidPairOfPants)
+    AlgebraHomology, CFDD_id, CFAA_id, PartialDehnTwist, SolidPairOfPants)
 from box_tensor_product import box_tensor
 
 import math
@@ -41,46 +41,42 @@ class Genus2Handlebody:
     # Computing SFH
     #-------------------------------------------------------------------------#
 
-    def SFH(self, load=True, save=True, method='HH'):
-        if load: 
+    def SFH(self, load=True, save=False, method='HH'):
+        if load:
             try: 
                 return self.SFH_ranks_from_csv() 
             except FileNotFoundError:
                 print('Computing ranks. (May take a while.)')
                 pass
 
-        # Computes the AA_id modules for all n's.
-        AA_id = []
-
-        arcs = [n - 1 for n, _ in self.edge_labels]
-        for n in arcs:
-            DD_dual = CFDD_id(n).dual()
-            A = AlgebraHomology(n)
-            A_dual = A.dual()
-            
-            DA = box_tensor(DD_dual, 0, A, 0)   
-            AA_id.append(box_tensor(DA, 0, A_dual, 1))
-
         # Creates one SolidPairOfPants module (the two trimodules are equal) 
         # and take the box tensor products with the identity to get an 
         # AAA module.
 
+        arcs = [label - 1 for label, _ in self.edge_labels]
         S1 = SolidPairOfPants(arcs[0], arcs[1], arcs[2])
-        S1 = box_tensor(S1, 0, AA_id[0], 0)
-        S1 = box_tensor(S1, 0, AA_id[1], 0)
-        S1 = box_tensor(S1, 0, AA_id[2], 0)
 
+        AA_id = {}
+        for n in arcs:
+            if not n in AA_id: # making sure it doesn't compute twice.
+                AA_id[n] = CFAA_id(n) 
+
+        for n in arcs:
+            S1 = box_tensor(S1, 0, AA_id[n], 0)
+        
         S2 = S1
 
-        # edge_labels gives how many times R_+ intersects the compressing disks
-        # and how much it is twisted along the handles.
-        DehnTwists = [PartialDehnTwist(n-1, k, AA_id[i]) for i, (n, k) 
-                      in enumerate(self.edge_labels)]
+        # edge_labels gives how many times R_+ intersects the compressing
+        # disks and how much it is twisted along the handles.
+        
+        DehnTwists = {} # making sure it doesn't compute twice again.
+        for n, k in self.edge_labels:
+            if not (n, k) in DehnTwists: 
+                DehnTwists[(n,k)] = PartialDehnTwist(n-1, k, AA_id[n-1])
 
         # Glue Dehn twists to one of the SolidPairOfPants
-        S2 = box_tensor(S2, 0, DehnTwists[0], 0)
-        S2 = box_tensor(S2, 0, DehnTwists[1], 0)
-        S2 = box_tensor(S2, 0, DehnTwists[2], 0)
+        for n, k in self.edge_labels:
+            S2 = box_tensor(S2, 0, DehnTwists[(n,k)], 0)
 
         # Glue two SolidPairOfPants
         if method == 'HH':
@@ -147,8 +143,12 @@ class Genus2Handlebody:
     # Plotting SFH ranks
     #-------------------------------------------------------------------------#
 
-    def SFH_plot(self, load=True, symmetric=True, diameter=None, **kwargs):
+    def SFH_plot(self, symmetric=True, diameter=None, **kwargs):
         points_by_rank = self.SFH_by_rank()
+        
+        if not points_by_rank:
+            print('Trivial SFH, empty plot.')
+            return
 
         xmax = max((point[0] for point in self.SFH_ranks))
         xmin = min((point[0] for point in self.SFH_ranks))
@@ -190,7 +190,8 @@ class Genus2Handlebody:
             xs, ys = [], []
             for x in range(xlim[0] + 1, xlim[1]):
                 for y in range(ylim[0] + 1, ylim[1]):
-                    if xymid - radius + 1 <= x+y <= xymid + radius - 1:
+                    if (math.ceil(xymid - radius + 1)
+                            <= x + y <= math.floor(xymid + radius - 1)):
                         xs.append(s3 * (2*x+y-1))
                         ys.append(-3*y - 1)
             
