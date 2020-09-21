@@ -5,3 +5,5 @@ This is a python program that computes the graded sutured Floer homology of a su
 This is a work in progress. So far the code computes SFH for a handlebody of genus 2 in the case where the train track giving the sutures is generic (triangle inequality is satisfied) and an extra parity condition is satisfied.
 
 For examples, and more details see the Jupyter notebook [HandlebodyExamples](./HandlebodyExamples.ipynb).
+
+The computation is done by working with a fixed maximal family of compressing disks and then by computing the bordered sutured Floer homology of each of the resulting pieces (all 3-balls with parametrized disks on their boundaries).
