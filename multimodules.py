@@ -135,67 +135,67 @@ class MultiModule:
                         print(op_string)
             print()
 
-    def plot(self, diameter=None, **kwargs):
+    # def plot(self, diameter=None, **kwargs):
 
-        if len(self.action_types) == 3:
-            # Draw the plot in a triangular grid.
-            fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(3,3), dpi=150)
+    #     if len(self.action_types) == 3:
+    #         # Draw the plot in a triangular grid.
+    #         fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(3,3), dpi=150)
 
-            # Draw rank for gradings with nonzero rank
-            points_by_rank = self.gradings_by_rank()
-            s3 = math.sqrt(3)
-            for rank in points_by_rank:
-                xs = [s3 * (x - z) for x, y, z in points_by_rank[rank]]
-                ys = [2*y - x - z for x, y, z in points_by_rank[rank]]
-                latex_rank = f'${rank}$'
-                ax.scatter(xs, ys, marker='s', color='w', zorder=2)
-                ax.scatter(xs, ys, marker=latex_rank, zorder=3)
+    #         # Draw rank for gradings with nonzero rank
+    #         points_by_rank = self.gradings_by_rank()
+    #         s3 = math.sqrt(3)
+    #         for rank in points_by_rank:
+    #             xs = [s3 * (x - z) for x, y, z in points_by_rank[rank]]
+    #             ys = [2*y - x - z for x, y, z in points_by_rank[rank]]
+    #             latex_rank = f'${rank}$'
+    #             ax.scatter(xs, ys, marker='s', color='w', zorder=2)
+    #             ax.scatter(xs, ys, marker=latex_rank, zorder=3)
 
-            # Check if diameter makes sense, and defines limits.
-            if diameter == None:
-                diameter = max(max(xs) - min(xs), max(ys)-min(ys))
+    #         # Check if diameter makes sense, and defines limits.
+    #         if diameter == None:
+    #             diameter = max(max(xs) - min(xs), max(ys)-min(ys))
             
-            if int(diameter) > 0:
-                xmid = (max(xs) - min(xs))/2
-                ymid = (max(ys) - min(ys))/2
+    #         if int(diameter) > 0:
+    #             xmid = (max(xs) - min(xs))/2
+    #             ymid = (max(ys) - min(ys))/2
                 
-                xlim = (xmid - diameter - 2, xmid + diameter + 2)
-                ylim = (ymid - diameter - 2, ymid + diameter + 2)
-            else:
-                raise Exception('diameter must be a positive integer.')
+    #             xlim = (xmid - diameter - 2, xmid + diameter + 2)
+    #             ylim = (ymid - diameter - 2, ymid + diameter + 2)
+    #         else:
+    #             raise Exception('diameter must be a positive integer.')
 
-            # Draw an triangular grid with diameter prescribed above.
-            xmid = (max(x for x, _, _ in self.ranks) 
-                    - min(x for x, _, _ in self.ranks))//2
-            ymid = (max(y for _, y, _ in self.ranks) 
-                    - min(y for _, y, _ in self.ranks))//2
-            zmid = (max(z for _, _, z in self.ranks) 
-                    - min(z for _, _, z in self.ranks))//2
+    #         # Draw an triangular grid with diameter prescribed above.
+    #         xmid = (max(x for x, _, _ in self.ranks) 
+    #                 - min(x for x, _, _ in self.ranks))//2
+    #         ymid = (max(y for _, y, _ in self.ranks) 
+    #                 - min(y for _, y, _ in self.ranks))//2
+    #         zmid = (max(z for _, _, z in self.ranks) 
+    #                 - min(z for _, _, z in self.ranks))//2
 
-            xys = set()
-            for dx in range(diameter//2 + 1):
-                for dy in range(diameter//2 + 1):
-                    for dz in range(diameter//2 + 1):
-                        x, y, z = xmid + dx, ymid + dy, zmid + dz
-                        xys.add((s3 * (x - z), 2*y - x - z))
+    #         xys = set()
+    #         for dx in range(diameter//2 + 1):
+    #             for dy in range(diameter//2 + 1):
+    #                 for dz in range(diameter//2 + 1):
+    #                     x, y, z = xmid + dx, ymid + dy, zmid + dz
+    #                     xys.add((s3 * (x - z), 2*y - x - z))
 
-            xys = list(xys)
-            xs = [x for x, _ in xys]
-            ys = [y for _, y in xys]
+    #         xys = list(xys)
+    #         xs = [x for x, _ in xys]
+    #         ys = [y for _, y in xys]
 
-            ax.scatter(xs, ys, marker='.', color='black',
-                       s=0.5, alpha=0.5, zorder=1)
+    #         ax.scatter(xs, ys, marker='.', color='black',
+    #                    s=0.5, alpha=0.5, zorder=1)
 
-            # Set options and limits
-            ax.set(**kwargs)
-            ax.set_axis_off()
-            ax.set(xlim=xlim, ylim=ylim)
-            ax.set_aspect('equal')
+    #         # Set options and limits
+    #         ax.set(**kwargs)
+    #         ax.set_axis_off()
+    #         ax.set(xlim=xlim, ylim=ylim)
+    #         ax.set_aspect('equal')
 
-            return ax
+    #         return ax
 
-        else:
-            print('Plot is not defined.')
+    #     else:
+    #         print('Plot is not defined.')
 
     #-------------------------------------------------------------------------#
     # Gradings, submodules, and related functions

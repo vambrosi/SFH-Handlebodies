@@ -236,3 +236,79 @@ class SolidPairOfPants(MultiModule):
                 self.ranks[b] += 1
             except KeyError:
                 self.ranks[b] = 1
+
+# class SolidPairOfPants(MultiModule):
+#     def __init__(self, R0, R1, R2):
+#         self.action_types = [('D','left'), ('D','left'), ('D','left')]
+#         self.arcs = [R0 - 1, R1 - 1, R2 - 1]
+#         self.alpha_arcs = [(self.arcs[0] - self.arcs[1] + self.arcs[2])//2, \
+#                            (self.arcs[1] - self.arcs[2] + self.arcs[0])//2, \
+#                            (self.arcs[2] - self.arcs[0] + self.arcs[1])//2]
+
+#         for arcs in self.alpha_arcs:
+#             if arcs < 0: raise Exception('Invalid parameters.')
+
+#         mid_arcs = [1 << arcs for arcs in self.alpha_arcs]
+
+#         # Adding generators to the MultiModule
+#         self.generators = {}
+
+#         ## Case where R_+ has two triangular regions.
+#         if int(self.arcs[0] + self.arcs[1] + self.arcs[2]) % 2:
+#             for S1 in range(mid_arcs[0]):
+#                 for T1 in range(mid_arcs[1]):
+#                     for U1 in range(mid_arcs[2]):
+#                         S2 = d_complement(T1, self.alpha_arcs[1])
+#                         T2 = d_complement(U1, self.alpha_arcs[2])
+#                         U2 = d_complement(S1, self.alpha_arcs[0])
+
+#                         S = S1 + (S2 << self.alpha_arcs[0] << 1)
+#                         T = T1 + (T2 << self.alpha_arcs[1] << 1)
+#                         U = U1 + (U2 << self.alpha_arcs[2] << 1)
+
+#                         self.generators[(S+mid_arcs[0], T+mid_arcs[1], U)] \
+#                             = [I(S+mid_arcs[0]), I(T+mid_arcs[1]), I(U)]
+#                         self.generators[(S, T+mid_arcs[1], U+mid_arcs[2])] \
+#                             = [I(S), I(T+mid_arcs[1]), I(U+mid_arcs[2])]
+#                         self.generators[(S+mid_arcs[0], T, U+mid_arcs[2])] \
+#                             = [I(S+mid_arcs[0]), I(T), I(U+mid_arcs[2])]
+
+#         ## Case where R_+ has one triangular region.
+#         else:
+#             for S1 in range(mid_arcs[0]):
+#                 for T1 in range(mid_arcs[1]):
+#                     for U1 in range(mid_arcs[2]):
+#                         S2 = d_complement(T1, self.alpha_arcs[1])
+#                         T2 = d_complement(U1, self.alpha_arcs[2])
+#                         U2 = d_complement(S1, self.alpha_arcs[0])
+
+#                         S = S1 + (S2 << self.alpha_arcs[0])
+#                         T = T1 + (T2 << self.alpha_arcs[1])
+#                         U = U1 + (U2 << self.alpha_arcs[2])
+
+#                         self.generators[(S, T, U)] = [I(S), I(T), I(U)]
+
+
+#         # Adding arrows to the MultiModule
+#         self.arrows = {gen:{} for gen in self.generators}
+
+#         ### Fix from here down ###
+#         # Octogonal regions that don't touch the middle
+#         for (S, T, U) in self.generators:
+#             # Octogonal regions between disk 2 and 0
+#             for (V, b) in shift_ones(S, 1, self.alpha_arcs[0]):
+#                 a = reverse(b,self.alpha_arcs[0])<<self.alpha_arcs[2] >> 1
+#                 self.arrows[(S, T, U)][(V, T, U + a)] \
+#                     = [[H(S, V), I(T), H(U, U+a)]]
+
+#             # Octogonal regions between disk 0 and 1
+#             for (V, b) in shift_ones(T, 1, self.alpha_arcs[1]):
+#                 a = reverse(b,self.alpha_arcs[1])<<self.alpha_arcs[0] >> 1
+#                 self.arrows[(S, T, U)][(S + a, V, U)] \
+#                     = [[H(S, S+a), H(T, V), I(U)]]
+
+#             # Octogonal regions between disk 1 and 2
+#             for (V, b) in shift_ones(U, 1, self.alpha_arcs[2]):
+#                 a = reverse(b,self.alpha_arcs[2])<<self.alpha_arcs[1] >> 1
+#                 self.arrows[(S, T, U)][(S, T + a, V)] \
+#                     = [[I(S), H(T, T+a), H(U, V)]]

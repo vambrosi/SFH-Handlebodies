@@ -81,7 +81,7 @@ class Genus2Handlebody:
         # Glue two SolidPairOfPants
         if method == 'HH':
             M = box_tensor(S1, 0, S2, 0, rename=True)
-            N = M.HH(0, 2)
+            N = M.HH(0, 3)
             N = N.HH(0, 1)
 
         elif method == 'box':
@@ -143,35 +143,16 @@ class Genus2Handlebody:
     # Plotting SFH ranks
     #-------------------------------------------------------------------------#
 
-    def SFH_plot(self, symmetric=True, diameter=None, **kwargs):
+    def SFH_plot(self, symmetric=True, **kwargs):
         points_by_rank = self.SFH_by_rank()
         
         if not points_by_rank:
             print('Trivial SFH, empty plot.')
             return
 
-        xmax = max((point[0] for point in self.SFH_ranks))
-        xmin = min((point[0] for point in self.SFH_ranks))
-        
-        ymax = max((point[1] for point in self.SFH_ranks))
-        ymin = min((point[1] for point in self.SFH_ranks))
-
-        xymax = max((point[0]+point[1] for point in self.SFH_ranks))
-        xymin = min((point[0]+point[1] for point in self.SFH_ranks))
-
-        xmid = (xmax + xmin)/2
-        ymid = (ymax + ymin)/2
-        xymid = (xymax + xymin)/2
-
-        if diameter == None:
-            radius = math.ceil(max(xmax-xmin, ymax-ymin, xymax-xymin, 3)/2) + 1
-        elif int(diameter) < 0:
-            raise Exception('diameter must be a positive integer.')
-        else:
-            radius = diameter//2 + 1
-
-        xlim = (int(xmid - radius), int(xmid + radius))
-        ylim = (int(ymid - radius), int(ymid + radius))
+        el = [x for x, _ in self.edge_labels]
+        xlim = (-2, el[1] + 1)
+        ylim = (-2, el[2] + 1)
 
         if symmetric:
             # Draw the plot in a triangular grid.
@@ -182,16 +163,21 @@ class Genus2Handlebody:
             for rank in points_by_rank:
                 ys = [-3*y - 1 for _, y in points_by_rank[rank]]
                 xs = [s3*(2*x+y-1) for x, y in points_by_rank[rank]]
+                
                 latex_rank = f'${rank}$'
+                m = max(points_by_rank)
                 ax.scatter(xs, ys, marker='s', color='w', zorder=2)
-                ax.scatter(xs, ys, marker=latex_rank, zorder=3)
+                ax.scatter(xs, ys, marker=latex_rank, zorder=3, linewidth=0.1,
+                           facecolor=plt.cm.inferno(math.sqrt((rank-1)/m)),
+                           edgecolor='black')
 
             # Draw an triangular grid with diameter prescribed above.
             xs, ys = [], []
+            el = [x for x, _ in self.edge_labels]
             for x in range(xlim[0] + 1, xlim[1]):
                 for y in range(ylim[0] + 1, ylim[1]):
-                    if (math.ceil(xymid - radius + 1)
-                            <= x + y <= math.floor(xymid + radius - 1)):
+                    if ((el[1] + el[2] - 2)/2 - (el[0]-1)/2 - 1 <= x + y 
+                        <= (el[1] + el[2] - 2)/2 + (el[0]- 1)/2 + 1):
                         xs.append(s3 * (2*x+y-1))
                         ys.append(-3*y - 1)
             
@@ -211,7 +197,10 @@ class Genus2Handlebody:
                 xs = [point[0] for point in points_by_rank[rank]]
                 ys = [point[1] for point in points_by_rank[rank]]
                 latex_rank = f'${rank}$'
-                ax.scatter(xs, ys, marker=latex_rank)
+                m = max(points_by_rank)
+                ax.scatter(xs, ys, marker=latex_rank, zorder=3, linewidth=0.1,
+                           facecolor=plt.cm.inferno(math.sqrt((rank-1)/m)),
+                           edgecolor='black')
 
             # Draws a square grid with side given by sides.
             xs, ys = [], []
@@ -270,7 +259,7 @@ def does_SFH_work():
         for s in range(1,4):
             for t in range(1,4):
                 M = Genus2Handlebody([(t+r+1,t), (r+s+1,r), (s+t+1,s)])
-                if M.SFH(load=True, save=True)[0] == (r+1)*(t+1) + (t+r+1)*s:
+                if M.SFH(load=True)[0] == (r+1)*(t+1) + (t+r+1)*s:
                     print(f'Works for r={r}, s={s}, t={t}')
                 else:
                     print(f"Doesn't work for r={r}, s={s}, t={t}")
