@@ -32,9 +32,9 @@ def AlgebraHomology(n):
     arrows = {gen: {} for gen in generators}
 
     for S in range(1 << n):
-        for U in range(S+1, 1 << n):
+        for U in range(S, 1 << n):
             if H(S, U) != 0:
-                for T in range(S + 1, U):
+                for T in range(S, U+1):
                     gen1 = H(S, T)
                     gen2 = H(T, U)
 
@@ -42,9 +42,7 @@ def AlgebraHomology(n):
                         arrows[(S, T)][(S,U)] = [[[], [gen2]]]
                         arrows[(T, U)][(S,U)] = [[[gen1], []]]
 
-                arrows[(S,U)][(S,U)] = [[[I(S)], []], [[], [I(U)]]]
-
-        arrows[(S,S)][(S,S)] = [[[I(S)], []], [[], [I(S)]]]
+        arrows[(S,S)][(S,S)].append([[], [I(S)]])
 
     return MultiModule(generators=generators, arrows=arrows,
                        action_types=action_types)
