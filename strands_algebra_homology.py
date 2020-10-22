@@ -48,7 +48,6 @@ class HomologyGenerator:
         H(3,5)*H(5,9) == H(3,9) is true
 
     Here we used the simplified notation H(n,m) = HomologyGenerator(n,m).
-    The extra parenthesis are necessary.
 
     4) To make multiplication faster, we assume that each term is nonzero
     on the product.

@@ -58,7 +58,7 @@ def shift_ones(n, k, m):
 
     Then, starts again with the next 1 in the expansion.
 
-    Ex: shift_one(10010011, 2, 8) yields 610011001, 11000011, and stops.
+    Ex: shift_one(10010011, 2, 8) yields 10011001, 11000011, and stops.
     '''
     a = singletons(crop(n, 1, m) + (1<<m))
     b = next(a)
@@ -75,6 +75,24 @@ def shift_ones(n, k, m):
         
         except StopIteration:
             break
+
+def shift_ones_d(S, m):
+    a = singletons(crop(S, 1, m) + (1<<m))
+    b = next(a)
+
+    while True:
+        try:
+            c = next(a)
+            d = c - b
+
+            if size(d) > 1:
+                T = S + (b << 1) - b
+                yield (T, d_complement(T, m))
+
+            b = c
+        
+        except StopIteration:
+            break    
 
 def singleton_next_not(n, m):
     '''Yields the powers of two present in the binary expansion that are

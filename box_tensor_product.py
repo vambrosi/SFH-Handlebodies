@@ -49,6 +49,7 @@ def box_tensor(M, boundariesM, N, boundariesN, rename=False, simplify=True):
 
                     for path, genM2 in zip(paths, ends):
                         composite = M.compose_arrows(genM1, path, boundariesM)
+
                         if not composite is 0:
                             P.add_arrow((genM1, genN1), (genM2, genN2),
                                         composite + drop(label, boundariesN))
@@ -60,6 +61,7 @@ def box_tensor(M, boundariesM, N, boundariesN, rename=False, simplify=True):
 
                     for path, genN2 in zip(paths, ends):
                         composite = N.compose_arrows(genN1, path, boundariesN)
+
                         if not composite is 0:
                             P.add_arrow((genM1, genN1), (genM2, genN2),
                                         drop(label, boundariesM) + composite)
