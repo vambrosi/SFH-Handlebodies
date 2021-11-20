@@ -1,10 +1,8 @@
 from basics import drop
-from strands_algebra_homology import H, I
 
-import math
-import csv
 
 class MultiModule:
+    '''A multimodule with type A and/or type D actions.'''
 
     def __init__(self, generators={}, arrows={}, action_types=[]):
         self.generators = generators
@@ -24,10 +22,10 @@ class MultiModule:
         self.arrows == other.arrows
         self.action_types == other.action_types
 
-    def __repr__(self):
+    def __str__(self):
         act = [a for (a,b) in self.action_types]
         act = ''.join(act)
-        return f'{act}Module with {len(self.generators)} generators'
+        return f'An {act} module with {len(self.generators)} generators.'
 
     #-------------------------------------------------------------------------#
     # User-iterface Functions
