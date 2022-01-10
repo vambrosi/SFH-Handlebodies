@@ -16,7 +16,7 @@ methods add_vertex or add_edge to build the graph.
 """
 
 #-----------------------------------------------------------------------------#
-#  Classes (in alphabetical order)
+#  Basic Classes
 #-----------------------------------------------------------------------------#
 
 
@@ -130,6 +130,10 @@ class Vertex(tuple):
         elif self.label == '-':
             return f'{self.name}\u208B'
 
+#-----------------------------------------------------------------------------#
+#  Main Class
+#-----------------------------------------------------------------------------#
+
 
 class SuturedGraph:
     def __init__(self):
@@ -188,8 +192,8 @@ class SuturedGraph:
         sutures, twist = labels
 
         # Vertices and edge references
-        v = self[v_name]
-        w = self[w_name]
+        v = self.check_vertex(v_name)
+        w = self.check_vertex(w_name)
         e = Edge(v, w, sutures, twist)
 
         # Update graph
@@ -204,11 +208,27 @@ class SuturedGraph:
         '''
         return self.incidence[v]
 
-    def spanning_tree(self, root):
+    def check_vertex(self, v):
+        '''
+        Checks if the input is a vertex, if it is not, assumes the input is a
+        vertex name, and returns the vertex with that name. (This function is
+        manly used internally, to allow the user to input a vertex or a name.)
+        '''
+
+        if isinstance(v, Vertex):
+            return v
+        else:
+            return self[v]
+
+    def spanning_tree(self, root_name):
         '''
         Finds a spanning tree for the connected component of the vertex given.
-        It returns the set of edges in that spanning tree.
+        Input can be a vertex or a vertex name. It returns the set of edges in
+        that spanning tree.
         '''
+
+        # Gets the vertex if given a vertex name
+        root = self.check_vertex(root_name)
 
         # Check if root is a vertex in the graph.
         assert root in self.vertices, 'Root is not in the graph.'
@@ -232,3 +252,20 @@ class SuturedGraph:
                 stack += [(e, e(v)) for e in self.incident_to(v)]
 
         return spanning_tree
+
+    def valence(self, v_name):
+        '''
+        Count the number of ends incident to the vertex. (It counts loops twice
+        and edges with different ends once.) The function takes as input the
+        name of the vertex or the vertex itself.
+        '''
+
+        # Gets a vertex if given a vertex name
+        v = self.check_vertex(v_name)
+
+        # Since there can be loops, we have to separate into two cases.
+        loops = [e for e in self.incident_to(v) if e[0] == e[1]]
+        open_edges = [e for e in self.incident_to(v) if e[0] != e[1]]
+
+        return 2*len(loops) + len(open_edges)
+
