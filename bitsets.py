@@ -13,25 +13,28 @@ def drop(a, index):
 #-----------------------------------------------------------------------------#
 # We can represent subsets of the positive integers using nonnegative integers.
 # Example: 5 = (101)_2 represents the set {1,3}.
-# The functions below define some basic set operations using integers. 
+# The functions below define some basic set operations using integers.
+
 
 def singletons(n):
     '''Yields the powers of two present in the binary expansion of a number.
     Equivalently, it yields the one elements subsets of n (viewed as a set).'''
-    
+
     while n:
         b = n & (~n+1)
         yield b
         n ^= b
 
+
 def singletons_complement(n, m):
     '''Yields the one elements subsets of the complement of n in {1, ..., m}.'''
     n = (1 << m) + ~n
-    
+
     while n:
         b = n & (~n+1)
         yield b
         n ^= b
+
 
 def elements(n):
     '''Yields the positions of the ones present in the binary expansion of a
@@ -43,11 +46,14 @@ def elements(n):
         yield b.bit_length()
         n ^= b
 
+
 def d_complement(S, m):
     return reverse((1 << m) + ~S, m)
 
+
 def crop(n, first, last):
-    return n & (1<<last) - (1 << first-1)
+    return n & (1 << last) - (1 << first-1)
+
 
 def shift_one(n, k, m):
     '''
@@ -58,7 +64,7 @@ def shift_one(n, k, m):
 
     Ex: shift_one(10010011, 2, 8) yields 610011001, 11000011, and stops.
     '''
-    a = singletons(crop(n, 1, m) + (1<<m))
+    a = singletons(crop(n, 1, m) + (1 << m))
     b = next(a)
 
     while True:
@@ -70,9 +76,10 @@ def shift_one(n, k, m):
                 yield (n + (b << k) - b, b)
 
             b = c
-        
+
         except StopIteration:
             break
+
 
 def singleton_next_not(n, m):
     '''Yields the powers of two present in the binary expansion that are
@@ -80,7 +87,7 @@ def singleton_next_not(n, m):
 
     In terms of subsets, it yield the singleton subsets {n} of a set T such
     that n+1 is not in T.
-                
+
     Example: singleton_next_not((10101101)_2, 6) = [1, (1000)_2]
     (6 is not included because the following 0 is in the 7th bit)'''
 
@@ -89,20 +96,23 @@ def singleton_next_not(n, m):
     m = (m >> 1) & n
     while n > m:
         b = n & (~n+1)
-        if not b << 1 & n: 
+        if not b << 1 & n:
             yield b
         n ^= b
+
 
 def size(n):
     '''Return sum of the digits in the binary expansion.
     Equivalently, it gives the number of elements in the subset.'''
     k = 0
     for i in elements(n):
-        k += 1      
+        k += 1
     return k
 
+
 def reverse(n, m):
-    return sum(1 << (m - i) for i in elements(crop(n,1,m)))
+    return sum(1 << (m - i) for i in elements(crop(n, 1, m)))
+
 
 def list_subset(n):
     return list(elements(n))

@@ -276,4 +276,3 @@ class SuturedGraph:
         '''
 
         return all(self.valence(v) == 3 for v in self.vertices)
-

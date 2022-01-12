@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 # Handlebody classes
 #-----------------------------------------------------------------------------#
 
+
 class Genus2Handlebody:
     def __init__(self, edge_labels):
         # TO DO: Still doesn't work when the edge_labels give a train track
@@ -22,7 +23,7 @@ class Genus2Handlebody:
 
         # Check that the geometric intersection number of each compressing disk
         # with the multicurve given by the sutures is even.
-        
+
         if not all(points % 2 == 0 for points, _ in edge_labels):
             raise Exception('Number of intervals must be even.')
 
@@ -44,7 +45,7 @@ class Genus2Handlebody:
         # Does not compute SFH on initialization. Only when you call the
         # function self.SFH() or when you call self.SFH_rank or self.SFH_ranks
         self.SFH_rank = None
-        self.SFH_ranks = None            
+        self.SFH_ranks = None
 
     @property
     def SFH_rank(self):
@@ -72,28 +73,28 @@ class Genus2Handlebody:
 
     def SFH(self, load=True, save=False, check=False):
         '''Computes the rank of SFH for all spin_c structures.'''
-        
+
         # If check=True it loads precomputed values to compare with the
         # new computed values. For debugging purposes only.
         if check:
             try:
                 self.SFH_ranks_from_csv()
                 save = False
-        
-            except FileNotFoundError:    
+
+            except FileNotFoundError:
                 raise Exception('Precomputed values not found.')
 
         # Loads ranks if possible.
         elif load:
-            try: 
-                return self.SFH_ranks_from_csv() 
+            try:
+                return self.SFH_ranks_from_csv()
             except FileNotFoundError:
                 print('Computing ranks. (Might take a while.)')
                 pass
 
         # edge_labels gives the number of arcs in the arc diagram of each disk
         # and how much we have to rotate the arc diagram before gluing.
-        
+
         edge_labels = [(points//2 - 1, (twist//2) % (points//2))
                        for points, twist in self.edge_labels]
 
@@ -103,13 +104,13 @@ class Genus2Handlebody:
 
         # DDDModule for the 1st and 2nd ball, respectively.
         S1 = SolidPairOfPants(arcs1[0], arcs1[1], arcs1[2])
-        
+
         if self.dual:
             S2 = SolidPairOfPants(arcs1[0], arcs1[1], arcs1[2]).dual()
         else:
             S2 = SolidPairOfPants(arcs2[0], arcs2[1], arcs2[2])
 
-        AA_id = {} # making sure it doesn't compute twice.
+        AA_id = {}  # making sure it doesn't compute twice.
         for n in arcs1:
             if not n in AA_id:
                 AA_id[n] = CFAA_id(n)
@@ -119,7 +120,7 @@ class Genus2Handlebody:
 
         if self.dual:
             smallest_twist = {}
-            
+
             for n in arcs1:
                 if not n in smallest_twist:
                     smallest_twist[n] = AlgebraHomology(n).dual()
@@ -128,12 +129,12 @@ class Genus2Handlebody:
         else:
             for n in arcs2:
                 S2 = box_tensor(S2, 0, AA_id[n], 0)
-       
-        DehnTwists = {} # making sure it doesn't compute twice again.
+
+        DehnTwists = {}  # making sure it doesn't compute twice again.
         for arcs, twist in edge_labels:
-            if not (arcs, twist) in DehnTwists: 
+            if not (arcs, twist) in DehnTwists:
                 DehnTwists[(arcs, twist)] \
-                = PartialDehnTwist(arcs, twist, AA_id[arcs])
+                    = PartialDehnTwist(arcs, twist, AA_id[arcs])
 
         for arcs, twist in edge_labels:
             S1 = box_tensor(S1, 0, DehnTwists[(arcs, twist)], 0)
@@ -145,7 +146,7 @@ class Genus2Handlebody:
         else:
             N = M.HH(0, 3)
         N = N.HH(0, 1)
-              
+
         # Creates a dictionary that associates the spin_c grading with the
         # rank of the corresponding sutured Floer homology. The spin_c grading
         # is given by the number of strands in the idempotents associated with
@@ -169,14 +170,15 @@ class Genus2Handlebody:
             self.SFH_rank = len(N.generators)
             self.SFH_ranks = SFH_ranks
 
-        if save: self.SFH_ranks_to_csv()
+        if save:
+            self.SFH_ranks_to_csv()
         return self.SFH_rank, self.SFH_ranks
 
     #-------------------------------------------------------------------------#
     # Loading/Saving computations
     #-------------------------------------------------------------------------#
 
-    def SFH_ranks_from_csv(self): # fix
+    def SFH_ranks_from_csv(self):  # fix
         el = self.edge_labels
         name = f'{el[0][0]}-{el[0][1]} ' \
                + f'{el[1][0]}-{el[1][1]} ' \
@@ -190,7 +192,7 @@ class Genus2Handlebody:
                 SFH_ranks[(int(row[0]), int(row[1]))] = int(row[2])
 
         self.SFH_ranks = SFH_ranks
-        
+
         SFH_rank = 0
         for _, rank in SFH_ranks.items():
             SFH_rank += rank
@@ -224,14 +226,14 @@ class Genus2Handlebody:
 
         if symmetric:
             # Draw the plot in a triangular grid.
-            fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(3,3), dpi=200)
+            fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(3, 3), dpi=200)
 
             # Draw rank for points where SFH has nonzero rank
             s3 = math.sqrt(3)
             for rank in points_by_rank:
                 ys = [-3*y - 1 for _, y in points_by_rank[rank]]
                 xs = [s3*(2*x+y-1) for x, y in points_by_rank[rank]]
-                
+
                 latex_rank = f'${rank}$'
                 m = max(points_by_rank)
                 ax.scatter(xs, ys, marker='s', color='w', zorder=2)
@@ -243,11 +245,11 @@ class Genus2Handlebody:
             xs, ys = [], []
             for x in range(xlim[0] + 1, xlim[1]):
                 for y in range(ylim[0] + 1, ylim[1]):
-                    if ((el[1] + el[2] - el[0] - 4)/2 < x + y 
-                        <= math.ceil((el[1] + el[2] + el[0] - 3)/2) + 1):
+                    if ((el[1] + el[2] - el[0] - 4)/2 < x + y
+                            <= math.ceil((el[1] + el[2] + el[0] - 3)/2) + 1):
                         xs.append(s3 * (2*x+y-1))
                         ys.append(-3*y - 1)
-            
+
             ax.scatter(xs, ys, marker='.', color='black',
                        s=0.5, alpha=0.5, zorder=1)
 
@@ -257,7 +259,7 @@ class Genus2Handlebody:
 
         else:
             # Draw the plot in a rectangular grid.
-            fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(2,2), dpi=150)
+            fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(2, 2), dpi=150)
 
             # Draw points_by_rank with nonzero rank
             for rank in points_by_rank:
@@ -276,14 +278,14 @@ class Genus2Handlebody:
                     if not (x, y) in self.SFH_ranks:
                         xs.append(x)
                         ys.append(y)
-            
+
             ax.scatter(xs, ys, marker='.', color='black', s=0.5, alpha=0.5)
 
         ax.set(**kwargs)
         ax.set_axis_off()
         ax.set(xlim=xlim, ylim=ylim)
         ax.set_aspect('equal')
-        
+
         plt.show()
         plt.close()
 
@@ -296,13 +298,14 @@ class Genus2Handlebody:
                 points_by_rank[rank] = [point]
         return points_by_rank
 
-class SuturedHandlebody: ## not working yet
+
+class SuturedHandlebody:  # not working yet
     def __init__(self, graph_dict, vertices=None):
         if vertices == None:
             self.vertices = set()
         else:
             self.vertices = vertices
-        
+
         self.edges = graph_dict
 
         for v in self.graph_dict:
@@ -312,7 +315,7 @@ class SuturedHandlebody: ## not working yet
 
     def find_spanning_tree(self):
         tree = {}
-        
+
         # pick any vertex and add to the tree
         v = next(iter(self.vertices))
         tree[v] = {}
@@ -323,20 +326,21 @@ class SuturedHandlebody: ## not working yet
 # Test Functions
 #-----------------------------------------------------------------------------#
 
+
 def check_SFH_pretzel_knots():
     '''Consider the complement of the Seifert surface of the pretzel knot
     P(2r+1, 2s+1, 2t+1) given by the checkerboard coloring of the canonical
     projection. This function computes the rank of the SFH of the associated
     sutured manifold and it compares with the result in Example 8.4 of
 
-    S. FRIEDL, A. JUHASZ, J. RASMUSSEN - 
+    S. FRIEDL, A. JUHASZ, J. RASMUSSEN -
     THE DECATEGORIFICATION OF SUTURED FLOER HOMOLOGY
     '''
 
     # Case where r,s,t > 0
-    for r in range(1,4):
-        for s in range(1,4):
-            for t in range(1,4):
+    for r in range(1, 4):
+        for s in range(1, 4):
+            for t in range(1, 4):
                 M = Genus2Handlebody([(2*(t+r+1), 2*(t+r+1) - 1),
                                       (2*(r+s+1), 2*(r+s+1) - 1),
                                       (2*(s+t+1), 2*(s+t+1) - 1)])

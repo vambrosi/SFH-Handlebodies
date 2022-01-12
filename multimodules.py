@@ -23,7 +23,7 @@ class MultiModule:
         self.action_types == other.action_types
 
     def __str__(self):
-        act = [a for (a,b) in self.action_types]
+        act = [a for (a, b) in self.action_types]
         act = ''.join(act)
         return f'An {act} module with {len(self.generators)} generators.'
 
@@ -43,14 +43,14 @@ class MultiModule:
             alphabet = [chr(ord('a') + i) for i in range(26)]
             for j in range(len(self.generators)//26):
                 alphabet += [chr(ord('a') + i) + str(j) for i in range(26)]
-            
-            renaming = {gen: alphabet[i] for i, gen 
+
+            renaming = {gen: alphabet[i] for i, gen
                         in enumerate(self.generators)}
 
         generators = {renaming[gen]: self.generators[gen]
                       for gen in self.generators}
         arrows = {renaming[gen]: {} for gen in self.generators}
-        
+
         for gen1 in self.arrows:
             for gen2 in self.arrows[gen1]:
                 self.arrows[gen1][gen2]
@@ -70,7 +70,7 @@ class MultiModule:
         # If you want to rename the generators only for viewing purposes.
         if rename:
             generators, arrows = self.rename_generators(
-                                    permanently=False, format_type=format_type)
+                permanently=False, format_type=format_type)
         else:
             generators = self.generators
             arrows = self.arrows
@@ -78,22 +78,22 @@ class MultiModule:
         # If you want to see only to see generators that have idempotents in
         # A(n1; n2; ...; nm) where strands = [n1, ..., nm].
 
-        if what=='all' or what=='generators':
+        if what == 'all' or what == 'generators':
             overlap = len(self.generators) != len(generators)
             print(f'Generators ({len(self.generators)}, overlap {overlap})')
-            
+
             for gen, idp in generators.items():
                 print(f'{gen}\t', idp)
             print()
 
-        if what=='all' or what=='operations':
+        if what == 'all' or what == 'operations':
             print('Operations')
             for start_gen, gen_dict in arrows.items():
                 for end_gen, labels in gen_dict.items():
                     for label in labels:
                         op_string = '\u03BC('
 
-                        for k, alg_gen in enumerate(label):              
+                        for k, alg_gen in enumerate(label):
                             if at[k] == ('A', 'left'):
                                 if alg_gen == []:
                                     op_string += '\u2219 , '
@@ -102,7 +102,7 @@ class MultiModule:
 
                         op_string += f'\u2329{start_gen}\u232A, '
 
-                        for k, alg_gen in enumerate(label):              
+                        for k, alg_gen in enumerate(label):
                             if at[k] == ('A', 'right'):
                                 if alg_gen == []:
                                     op_string += '\u2219 , '
@@ -111,20 +111,20 @@ class MultiModule:
 
                         op_string = op_string[:-2] + ') = '
 
-                        for k, alg_gen in enumerate(label):              
+                        for k, alg_gen in enumerate(label):
                             if at[k] == ('D', 'left'):
                                 if alg_gen is None or alg_gen.is_idempotent():
                                     op_string += f'\u2219|'
-                                else:    
+                                else:
                                     op_string += f'{alg_gen}|'
 
                         op_string = op_string[:-1] + f' \u2329{end_gen}\u232A '
 
-                        for k, alg_gen in enumerate(label):              
+                        for k, alg_gen in enumerate(label):
                             if at[k] == ('D', 'right') and not alg_gen is None:
                                 if alg_gen is None or alg_gen.is_idempotent():
                                     op_string += f'\u2219|'
-                                else:    
+                                else:
                                     op_string += f'{alg_gen}|'
 
                         op_string = op_string[:-1]
@@ -231,19 +231,19 @@ class MultiModule:
 
                     if label[b1] == D_sequence and label[b2].is_idempotent():
                         new_label = self.compose_arrows(start_gen,
-                                                        path + [label], 
+                                                        path + [label],
                                                         [b1, b2])
                         if not new_label is 0 and new_end in M.generators:
                             M.add_arrow(start_gen, new_end, new_label)
 
-                    if (not label[b2].is_idempotent() 
-                        and label[b1] == D_sequence[:len(label[b1])]):
+                    if (not label[b2].is_idempotent()
+                            and label[b1] == D_sequence[:len(label[b1])]):
                         stack.append(path + [label, new_end])
 
         if simplify:
             M.cancel_all_arrows()
         return M
-        
+
     #-------------------------------------------------------------------------#
     # Arrow manipulation
     #-------------------------------------------------------------------------#
@@ -372,9 +372,11 @@ class MultiModule:
 
     def is_arrows_consistent(self):
         for gen1 in self.arrows:
-            if not gen1 in self.generators: return False
+            if not gen1 in self.generators:
+                return False
             for gen2 in self.arrows[gen1]:
-                if gen2 not in self.generators: return False
+                if gen2 not in self.generators:
+                    return False
         return True
 
     #-------------------------------------------------------------------------#
@@ -407,7 +409,7 @@ class MultiModule:
             except IndexError:
                 paths.append(path.copy())
                 ends.append(end_gen)
-                
+
                 try:
                     path.pop()
                     stack.pop()

@@ -3,32 +3,33 @@
 #-----------------------------------------------------------------------------#
 from basics import *
 
+
 class HomologyGenerator:
     '''
     This class encodes the generators of the homology of A(infty,k).
-            
+
     Generators of A(infty, k) are tuples (S, T, phi) where S and T are finite
     subsets of the positive integers and phi: S -> T is a bijection. Since no
     two strands cross in a nonzero element h of the homology, phi is just the
     unique increasing map between S and T. Thus, h is completely determined by
     its 'left' and 'right' sets (S and T).
 
-    To minimize the memory used subsets of the positive integers will be 
+    To minimize the memory used subsets of the positive integers will be
     represented by nonnegative integers.
 
     Example: 5=(101) in base 2, so 5 represents the set {1, 3}.
-    
+
     Using this convention HomologyGenerator can be used as follows.
 
     Examples------------------------------------------------------------------
-    
+
     1) HomologyGenerator(3,5) represents the increasing map 1 2 -> 1 3
 
-    2) HomologyGenerator does not reject 'invalid' inputs like 
-        
-        HomologyGenerator(3,4) 
-        
-    which has sets of different size. However, 
+    2) HomologyGenerator does not reject 'invalid' inputs like
+
+        HomologyGenerator(3,4)
+
+    which has sets of different size. However,
 
         HomologyGenerator(3,4).is_zero() returns true
         and HomologyGenerator(3,4) == 0 is also true
@@ -72,20 +73,20 @@ class HomologyGenerator:
         else:
             return self.left_set == other.left_set \
                 and self.right_set == other.right_set
-            
+
     def __repr__(self):
         if self.left_set == 0:
             return '\u2205'
         elif self.is_zero():
             return '0'
         elif self.is_idempotent():
-            endpoints = str(list_subset(self.left_set))[1:-1].replace(',','')
+            endpoints = str(list_subset(self.left_set))[1:-1].replace(',', '')
             return f'({endpoints})'
         else:
-            left = str(list_subset(self.left_set))[1:-1].replace(',','')
-            right = str(list_subset(self.right_set))[1:-1].replace(',','')
+            left = str(list_subset(self.left_set))[1:-1].replace(',', '')
+            right = str(list_subset(self.right_set))[1:-1].replace(',', '')
             return f'({left} \u21A6 {right})'
-        
+
     def __mul__(self, other):
         try:
             if self.right_set != other.left_set:
@@ -96,13 +97,13 @@ class HomologyGenerator:
                     return 0
                 else:
                     return gen
-        
+
         except AttributeError:
             if other % 2:
                 return self
             else:
                 return 0
-    
+
     def __rmul__(self, other):
         # Defines product by scalar on the left.
         try:
@@ -118,12 +119,12 @@ class HomologyGenerator:
             return size(self.left_set)
         else:
             raise Exception('Not well defined.')
-   
+
     def is_zero(self, do_full_check=True):
         '''The variables same_size and upward_veering are there to check if the
         generator is actually in the strands algebra; overlap checks if the
         generator is a boundary. More details in LOT Bimodules paper.'''
-        
+
         left = list_subset(self.left_set)
         right = list_subset(self.right_set)
 
@@ -146,8 +147,10 @@ class HomologyGenerator:
 # Functions to simplify the notation. They will be used in the other files.
 #-----------------------------------------------------------------------------#
 
+
 def I(subset):
     return HomologyGenerator(subset, subset)
+
 
 def H(left_set, right_set):
     return HomologyGenerator(left_set, right_set)

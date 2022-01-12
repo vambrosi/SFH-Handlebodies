@@ -4,13 +4,13 @@
 from basics import drop
 from multimodules import MultiModule
 
+
 def box_tensor(M, boundariesM, N, boundariesN, rename=False, simplify=True):
     ### Doesn't work for more than one boundary ###
-
     '''
-    Returns the box tensor product of the MultiModules M and N. bM and bN are 
-    integers that denote the components that will be glued. The code assumes 
-    that the bM action on M is on the right and that the bN action on N is on 
+    Returns the box tensor product of the MultiModules M and N. bM and bN are
+    integers that denote the components that will be glued. The code assumes
+    that the bM action on M is on the right and that the bN action on N is on
     the left.
     '''
 
@@ -19,9 +19,9 @@ def box_tensor(M, boundariesM, N, boundariesN, rename=False, simplify=True):
         boundariesM = [boundariesM]
         boundariesN = [boundariesN]
 
-    # The resulting module has actions carried over from to the ones in M 
+    # The resulting module has actions carried over from to the ones in M
     # and N (we remove the glued boundary components from the list).
-    action_types = (drop(M.action_types, boundariesM) 
+    action_types = (drop(M.action_types, boundariesM)
                     + drop(N.action_types, boundariesN))
 
     # Generators are given by tensor products over the idempotent ring, so
