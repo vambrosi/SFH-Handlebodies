@@ -298,30 +298,6 @@ class Genus2Handlebody:
                 points_by_rank[rank] = [point]
         return points_by_rank
 
-
-class SuturedHandlebody:  # not working yet
-    def __init__(self, graph_dict, vertices=None):
-        if vertices == None:
-            self.vertices = set()
-        else:
-            self.vertices = vertices
-
-        self.edges = graph_dict
-
-        for v in self.graph_dict:
-            self.vertices.add(v)
-            for w in self.graph[v]:
-                self.vertices.add(w)
-
-    def find_spanning_tree(self):
-        tree = {}
-
-        # pick any vertex and add to the tree
-        v = next(iter(self.vertices))
-        tree[v] = {}
-
-        # start a stack of iterators
-
 #-----------------------------------------------------------------------------#
 # Test Functions
 #-----------------------------------------------------------------------------#
