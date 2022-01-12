@@ -269,3 +269,11 @@ class SuturedGraph:
 
         return 2*len(loops) + len(open_edges)
 
+    def check_valence(self):
+        '''
+        Checks if the graph is trivalent. This is necessary to compute SFH of
+        the associated sutured handlebody.
+        '''
+
+        return all(self.valence(v) == 3 for v in self.vertices)
+
