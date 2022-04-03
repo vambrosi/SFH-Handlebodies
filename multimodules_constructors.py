@@ -2,7 +2,7 @@
 # Main MultiModules constructors.
 #-----------------------------------------------------------------------------#
 from basics import (d_complement, shift_ones, shift_ones_d,
-                    singletons, reverse, crop)
+                    singletons, reverse)
 
 from strands_algebra_homology import H, I
 from multimodules import MultiModule
@@ -153,6 +153,59 @@ def PartialDehnTwist(arcs, power, AA_id=None):
         DD.cancel_all_arrows()
 
     return DD
+
+
+def DDEdge(sutures, twist):
+    # Twist must be even (odd case will be added later)
+    assert twist % 2 == 0
+
+    # Module parameters
+    arcs = sutures // 2 - 1
+    shift = twist // 2
+
+    # Trivial case (when there is no twist)
+    if twist % sutures == 0:
+        return CFDD_id(arcs)
+
+    # Non-trivial case
+
+    # There are 2 sets of arcs + the two mid-arcs.
+    # Mid-arcs have the same index on both sides.
+    arcs_before_mid = arcs - shift
+    arcs_after_mid = shift - 1
+    mid_arc = arcs_before_mid + 1
+
+    # Action type (even case)
+    action_types = [('D', 'left'), ('D', 'left')]
+
+    # Adding generators
+    # The generators can be enumerated by first choosing which arcs are
+    # occupied in the two sets of arcs (before and after midpoint). Then,
+    # we have two options: we fill both mid-arcs and then remove one arc
+    # from the right, or we just fill the mid-arc in the right.
+    generators = {}
+
+    for S in range(1 << arcs_before_mid):
+        for T in range(1 << arcs_after_mid):
+            U = d_complement(S, n)
+            V = d_complement(T, n)
+
+            # Only the right mid-arc filled
+            left_set = S + (T << mid_arc)
+            right_set = U + (V << mid_arc) + mid_arc
+            generators[(left_set, right_set)] = [I(left_set), I(right_set)]
+
+            # Fill the left mid-arc also but remove one from the right
+            left_set = left_set + mid_arc
+            for k in singletons(right_set):
+                generators[(left_set, right_set - k)] = \
+                    [I(left_set), I(right_set - k)]
+
+    # Adding arrows
+    # In progress -------------------------------------------------------------
+
+    return MultiModule(generators=generators,
+                       action_types=action_types)
 
 
 class SolidPairOfPants(MultiModule):
