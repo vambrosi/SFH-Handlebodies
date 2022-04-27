@@ -62,3 +62,7 @@ def singletons_complement(n0, m):
 def next_zero(n0, start):
     n = ~n0 & ~((start << 1) - 1)
     return n & (~n+1)
+
+def next_one(n0, start):
+    n = n0 & ~((start << 1) - 1)
+    return n & (~n+1)
