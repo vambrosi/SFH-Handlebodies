@@ -2,6 +2,7 @@
 # Sutured Handlebodies (given by a graph)
 #-----------------------------------------------------------------------------#
 
+from constructors import DDEdge
 from multimodules import MultiModule
 from multimodules_constructors import (
     AlgebraHomology, CFDD_id, CFAA_id, PartialDehnTwist, SolidPairOfPants)
@@ -71,7 +72,7 @@ class Genus2Handlebody:
     # Computing SFH
     #-------------------------------------------------------------------------#
 
-    def SFH(self, load=True, save=False, check=False):
+    def SFH(self, load=False, save=False, check=False, fast_test=False):
         '''Computes the rank of SFH for all spin_c structures.'''
 
         # If check=True it loads precomputed values to compare with the
@@ -131,10 +132,17 @@ class Genus2Handlebody:
                 S2 = box_tensor(S2, 0, AA_id[n], 0)
 
         DehnTwists = {}  # making sure it doesn't compute twice again.
-        for arcs, twist in edge_labels:
-            if not (arcs, twist) in DehnTwists:
-                DehnTwists[(arcs, twist)] \
-                    = PartialDehnTwist(arcs, twist, AA_id[arcs])
+
+        if fast_test:
+            for arcs, twist in edge_labels:
+                if not (arcs, twist) in DehnTwists:
+                    DehnTwists[(arcs, twist)] \
+                        = PartialDehnTwist(arcs, twist, AA_id[arcs])
+        else:
+            for arcs, twist in edge_labels:
+                if not (arcs, twist) in DehnTwists:
+                    DehnTwists[(arcs, twist)] \
+                        = DDEdge(2*arcs+2, 2*twist, '+')
 
         for arcs, twist in edge_labels:
             S1 = box_tensor(S1, 0, DehnTwists[(arcs, twist)], 0)
@@ -217,7 +225,7 @@ class Genus2Handlebody:
     # Plotting SFH ranks
     #-------------------------------------------------------------------------#
 
-    def SFH_plot(self, symmetric=True, **kwargs):
+    def SFH_plot(self, symmetric=True, show=True, filename='', **kwargs):
         points_by_rank = self.SFH_by_rank()
 
         el = [x//2 for x, _ in self.edge_labels]
@@ -286,7 +294,10 @@ class Genus2Handlebody:
         ax.set(xlim=xlim, ylim=ylim)
         ax.set_aspect('equal')
 
-        plt.show()
+        if filename:
+            plt.savefig(filename)
+        if show:
+            plt.show()
         plt.close()
 
     def SFH_by_rank(self):

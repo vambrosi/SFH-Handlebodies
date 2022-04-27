@@ -46,7 +46,7 @@ def AlgebraHomology(n):
         arrows[(S, S)][(S, S)].append([[], [I(S)]])
 
     return MultiModule(generators=generators, arrows=arrows,
-                       action_types=action_types)
+                       action_types=action_types) 
 
 
 def CFDD_id(arcs):
