@@ -3,7 +3,7 @@
 #-----------------------------------------------------------------------------#
 from matplotlib.pyplot import box
 from bitsets import (left_rotate, next_one, next_zero, opposite, complement,
-                        singletons, singletons_complement)
+                     singletons, singletons_complement)
 
 from strands_algebra_homology import H, I
 from multimodules import MultiModule
@@ -16,18 +16,19 @@ from multimodules_constructors import CFDD_id as DDid
 # Bimodules
 #-----------------------------------------------------------------------------#
 
+
 def AAHomology(sutures):
-    ## Module parameter
+    # Module parameter
     arcs = sutures // 2 - 1
 
-    ## Adding generators
+    # Adding generators
     gens = {}
     for S in range(1 << arcs):
         for U in range(S, 1 << arcs):
             if H(S, U) != 0:
                 gens[(S, U)] = [I(S), I(U)]
 
-    ## Adding arrows
+    # Adding arrows
     arrows = {gen: {} for gen in gens}
 
     for S in range(1 << arcs):
@@ -48,9 +49,9 @@ def AAHomology(sutures):
 
 
 def DDEdge(sutures, twist, sign):
-    assert sutures>0 and sutures % 2 == 0
+    assert sutures > 0 and sutures % 2 == 0
 
-    ## Trivial cases
+    # Trivial cases
     if twist % sutures == 0:
         if sign == '+':
             return DDid(sutures//2 - 1)
@@ -65,12 +66,12 @@ def DDEdge(sutures, twist, sign):
             M = box_tensor(id.dual(), 1, AAHomology(sutures).dual(), 1)
         return box_tensor(M, 1, id, 0)
 
-    ## Module parameters
+    # Module parameters
     n = sutures // 2
     k = (twist % sutures) // 2
     is_odd = twist % 2
 
-    ## Adding generators
+    # Adding generators
     gens = {}
 
     # Generators are parametrized by tuples (U,V,u,v)
@@ -80,23 +81,23 @@ def DDEdge(sutures, twist, sign):
 
     for A in range(1 << n - k - 1):
         for B in range(1 << k - 1):
-            U0 = ((B << n - k) | A ) << 1
+            U0 = ((B << n - k) | A) << 1
 
             # Tuples where u = {n-k}
             U = U0
             u = u0
             V, v = twist_complement(U, u, n, k)
 
-            gens[(U,V,u,v)] = [I(U >> 1), I(V >> 1)]
+            gens[(U, V, u, v)] = [I(U >> 1), I(V >> 1)]
 
             # Tuples where u != {n-k}
             U = U0 + u0
 
             for u in singletons_complement(U, n):
                 V, v = twist_complement(U, u, n, k)
-                gens[(U,V,u,v)] = [I(U >> 1), I(V >> 1)]
+                gens[(U, V, u, v)] = [I(U >> 1), I(V >> 1)]
 
-    ## Adding arrows
+    # Adding arrows
     arrows = {gen: {} for gen in gens}
 
     for (U1, V1, u1, v1) in gens:
@@ -113,7 +114,7 @@ def DDEdge(sutures, twist, sign):
                         [[H(U1 >> 1, U2 >> 1), H(V1 >> 1, V2 >> 1)]]
 
     M = MultiModule(generators=gens, arrows=arrows,
-                       action_types=[('D', 'left'), ('D', 'left')])
+                    action_types=[('D', 'left'), ('D', 'left')])
 
     if sign == '+':
         if is_odd:
@@ -129,6 +130,15 @@ def DDEdge(sutures, twist, sign):
             return M.dual()
 
 
+def ADEdge(sutures, twist, sign):
+    if sign == '+':
+        DD = DDEdge(sutures, twist, '-')
+        return box_tensor(AAHomology(sutures), 0, DD, 0)
+    if sign == '-':
+        DD = DDEdge(sutures, twist, '+')
+        return box_tensor(AAHomology(sutures), 1, DD, 0)
+
+
 #-----------------------------------------------------------------------------#
 # Auxiliary functions
 #-----------------------------------------------------------------------------#
@@ -137,6 +147,7 @@ def twist_complement(U, u, n, k):
     V = complement(left_rotate(opposite(U + u, n), n-k, n), n)
     v = 1 << ((n-k+1-u.bit_length()) % n)
     return V, v
+
 
 def twist_flip_check(U1, U2, V1, V2):
     U_xor = U1 ^ U2
