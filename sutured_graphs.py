@@ -20,6 +20,10 @@ methods add_vertex or add_edge to build the graph.
 #-----------------------------------------------------------------------------#
 
 
+from email.errors import InvalidMultipartContentTransferEncodingDefect
+from tokenize import String
+
+
 class CyclicList(list):
     def __getitem__(self, index):
         if isinstance(index, int):
@@ -155,17 +159,26 @@ class SuturedGraph:
             if vertex.name == name:
                 return vertex
 
+        raise IndexError('No vertex with that name.')
+
+    #-------------------------------------------------------------------------#
+    # Graph-editing methods
+    #-------------------------------------------------------------------------#
+
     def add_vertex(self, name, sign):
         '''
         Adds a vertex with the indicated name and label to the graph.
         '''
 
         # Checks if there is a vertex with that name already
-        assert self[name] is None, 'There is a vertex with that name already.'
-
-        v = Vertex(name, sign)
-        self.vertices.add(v)
-        self.incidence[v] = []
+        try:
+            self[name]
+        except IndexError:
+            v = Vertex(name, sign)
+            self.vertices.add(v)
+            self.incidence[v] = []
+        else:
+            raise IndexError('Graph already has a vertex with this name.')
 
     def add_edge(self, end1, end2, labels):
         '''
@@ -186,52 +199,108 @@ class SuturedGraph:
         otherwise.
         '''
 
-        # Unpacking variables
-        v_name, v_insertion = end1
-        w_name, w_insertion = end2
+        # Unpacking variables (if needed)
+        if isinstance(end1, str):
+            v_name = end1
+            v_insertion = None
+        else:
+            v_name, v_insertion = end1
+        if isinstance(end2, str):
+            w_name = end2
+            w_insertion = None
+        else:
+            w_name, w_insertion = end2
+
         sutures, twist = labels
 
         # Vertices and edge references
-        v = self.check_vertex(v_name)
-        w = self.check_vertex(w_name)
+        v = self.get_vertex(v_name)
+        w = self.get_vertex(w_name)
         e = Edge(v, w, sutures, twist)
+
+        # In case insertion is not defined
+        if v_insertion == None:
+            v_insertion = len(self.incidence[v])
+        if w_insertion == None:
+            w_insertion = len(self.incidence[v])
 
         # Update graph
         self.incidence[v].insert(v_insertion, e)
         self.incidence[w].insert(w_insertion, e)
         self.edges.add(e)
 
+    #-------------------------------------------------------------------------#
+    # Local Properties
+    #-------------------------------------------------------------------------#
+
     def incident_to(self, v):
         '''
-        Returns a CyclicList of edges incident to the given vertex. The cyclic
-        order is given by the ribbon structure on the graph.
+        Returns a list of edges incident to the given vertex. The order is
+        given by the ribbon structure on the graph.
         '''
+        # In case v is just the vertex name and not the vertex
+        v = self.get_vertex(v)
+
         return self.incidence[v]
 
-    def check_vertex(self, v):
+    def get_vertex(self, v):
         '''
-        Checks if the input is a vertex, if it is not, assumes the input is a
-        vertex name, and returns the vertex with that name. (This function is
-        manly used internally, to allow the user to input a vertex or a name.)
+        Function that normalizes vertex inputs. If the input is a vertex, it
+        outputs it back, if it is a name it gives a vertex with that name back,
+        if it exists, and gives a vertex in the graph otherwise.
+
+        Mostly used internally to allow users to input names instead of
+        vertices or to not make a vertex choice at all, when that is an option.
         '''
 
         if isinstance(v, Vertex):
             return v
-        else:
+        elif isinstance(v, str):
             return self[v]
+        else:
+            for v in self.vertices:
+                return v
 
-    def spanning_tree(self, root_name):
+            # Only gets here if there are no vertices.
+            raise IndexError('Graph is empty.')
+
+    def valence(self, v_name):
+        '''
+        Count the number of ends incident to the vertex. (It counts loops twice
+        and edges with different ends once.) The function takes as input the
+        name of the vertex or the vertex itself.
+        '''
+
+        # Gets a vertex if given a vertex name
+        v = self.get_vertex(v_name)
+
+        # Since there can be loops, we have to separate into two cases.
+        loops = [e for e in self.incident_to(v) if e[0] == e[1]]
+        open_edges = [e for e in self.incident_to(v) if e[0] != e[1]]
+
+        return 2*len(loops) + len(open_edges)
+
+    def check_valence(self):
+        '''
+        Checks if the graph is trivalent. This is necessary to compute SFH of
+        the associated sutured handlebody.
+        '''
+
+        return all(self.valence(v) == 3 for v in self.vertices)
+
+    #-------------------------------------------------------------------------#
+    # Global Properties
+    #-------------------------------------------------------------------------#
+
+    def spanning_tree(self, root_name=None):
         '''
         Finds a spanning tree for the connected component of the vertex given.
         Input can be a vertex or a vertex name. It returns the set of edges in
         that spanning tree.
         '''
 
-        # Gets the vertex if given a vertex name
-        root = self.check_vertex(root_name)
-
-        # Check if root is a vertex in the graph.
-        assert root in self.vertices, 'Root is not in the graph.'
+        # Get the root or pick a root if one was not choosen
+        root = self.get_vertex(root_name)
 
         # Below we have a standard depth-first search.
         # We add every edge that does not create a loop.
@@ -253,26 +322,30 @@ class SuturedGraph:
 
         return spanning_tree
 
-    def valence(self, v_name):
+    def fundamental_group_gens(self, root_name=None):
         '''
-        Count the number of ends incident to the vertex. (It counts loops twice
-        and edges with different ends once.) The function takes as input the
-        name of the vertex or the vertex itself.
-        '''
-
-        # Gets a vertex if given a vertex name
-        v = self.check_vertex(v_name)
-
-        # Since there can be loops, we have to separate into two cases.
-        loops = [e for e in self.incident_to(v) if e[0] == e[1]]
-        open_edges = [e for e in self.incident_to(v) if e[0] != e[1]]
-
-        return 2*len(loops) + len(open_edges)
-
-    def check_valence(self):
-        '''
-        Checks if the graph is trivalent. This is necessary to compute SFH of
-        the associated sutured handlebody.
+        Chooses a spanning tree and returns the edges complementary to it.
+        If the graph is connected those edges represent the generators of the
+        fundamental group. If the graph is not connected, an error is raised.
+        If needed, root_name lets you specify the root of the spanning tree.
         '''
 
-        return all(self.valence(v) == 3 for v in self.vertices)
+        spanning_tree = self.spanning_tree(root_name=root_name)
+        gens = self.edges.difference(spanning_tree)
+
+        assert len(gens) == self.genus(), "Graph is not connected."
+        return gens
+
+    def genus(self):
+        '''
+        Computes the genus of the graph. Assumes the graph is connected.
+        '''
+        return 1 - len(self.vertices) + len(self.edges)
+
+    def SFH_ranks(self, root_name=None):
+        '''
+        Returns a dictionary {Spin^c grading: rank of SFH}.
+        Assumes the sutured graph is connected.
+        '''
+        # Checks that graph is trivalent
+        assert self.check_valence(), 'Graph is not trivalent.'
