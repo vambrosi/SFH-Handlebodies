@@ -6,4 +6,4 @@ This is a work in progress. So far the code computes SFH for a handlebody of gen
 
 For examples, and more details see the Jupyter notebook [HandlebodyExamples](./HandlebodyExamples.ipynb).
 
-The computation is done by working with a fixed maximal family of compressing disks and then computing the bordered sutured Floer homology of each of the resulting pieces (all 3-balls with parametrized disks on their boundaries). Some of the code in the multimodules.py file is due to Jonathan Hanselman.
+The computation is done by working with a fixed maximal family of compressing disks and then computing the bordered sutured Floer homology of each of the resulting pieces (all 3-balls with parametrized disks on their boundaries). Some of the code in the modules.py file is due to Jonathan Hanselman.
