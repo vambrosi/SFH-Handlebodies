@@ -2,10 +2,10 @@
 # Box tensor product
 #-----------------------------------------------------------------------------#
 from basics import drop
-from multimodules import MultiModule
+from modules import MultiModule
 
 
-def box_tensor(M, boundariesM, N, boundariesN, rename=False, simplify=True):
+def tensor(M, boundariesM, N, boundariesN, rename=False, simplify=True):
     ### Doesn't work for more than one boundary ###
     '''
     Returns the box tensor product of the MultiModules M and N. bM and bN are

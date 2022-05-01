@@ -1,19 +1,16 @@
 #-----------------------------------------------------------------------------#
-# Sutured Handlebodies (given by a graph)
+# Genus 2 Handlebodies
 #-----------------------------------------------------------------------------#
 
-from constructors import DDEdge
-from multimodules import MultiModule
-from multimodules_constructors import (
-    AlgebraHomology, CFDD_id, CFAA_id, PartialDehnTwist, SolidPairOfPants)
-from box_tensor_product import box_tensor
+from constructors import (AAEdge, DDDVertex, DDid)
+from tensor import tensor
 
 import math
 import csv
 import matplotlib.pyplot as plt
 
 #-----------------------------------------------------------------------------#
-# Handlebody classes
+# Handlebody class
 #-----------------------------------------------------------------------------#
 
 
@@ -72,7 +69,7 @@ class Genus2Handlebody:
     # Computing SFH
     #-------------------------------------------------------------------------#
 
-    def SFH(self, load=False, save=False, check=False, fast_test=False):
+    def SFH(self, load=False, save=False, check=False):
         '''Computes the rank of SFH for all spin_c structures.'''
 
         # If check=True it loads precomputed values to compare with the
@@ -96,59 +93,29 @@ class Genus2Handlebody:
         # edge_labels gives the number of arcs in the arc diagram of each disk
         # and how much we have to rotate the arc diagram before gluing.
 
-        edge_labels = [(points//2 - 1, (twist//2) % (points//2))
-                       for points, twist in self.edge_labels]
+        labels = [(sutures, twist % sutures)
+                    for sutures, twist in self.edge_labels]
 
         # Numbers of arcs for each parametrized disk in the 1st and 2nd ball
-        arcs1 = [edge_labels[0][0], edge_labels[1][0], edge_labels[2][0]]
-        arcs2 = [edge_labels[0][0], edge_labels[2][0], edge_labels[1][0]]
+        arcs1 = [labels[0][0], labels[1][0], labels[2][0]]
+        arcs2 = [labels[0][0], labels[2][0], labels[1][0]]
 
-        # DDDModule for the 1st and 2nd ball, respectively.
-        S1 = SolidPairOfPants(arcs1[0], arcs1[1], arcs1[2])
+        # DDDModule for the 1st ball
+        S1 = DDDVertex(arcs1[0], arcs1[1], arcs1[2])
 
-        if self.dual:
-            S2 = SolidPairOfPants(arcs1[0], arcs1[1], arcs1[2]).dual()
-        else:
-            S2 = SolidPairOfPants(arcs2[0], arcs2[1], arcs2[2])
-
-        AA_id = {}  # making sure it doesn't compute twice.
-        for n in arcs1:
-            if not n in AA_id:
-                AA_id[n] = CFAA_id(n)
-
-        for n in arcs1:
-            S1 = box_tensor(S1, 0, AA_id[n], 0)
+        # Add twists
+        for sutures, twist in labels:
+            T = AAEdge(sutures, twist, '+')
+            S1 = tensor(S1, 0, T, 0)
 
         if self.dual:
-            smallest_twist = {}
-
-            for n in arcs1:
-                if not n in smallest_twist:
-                    smallest_twist[n] = AlgebraHomology(n).dual()
-                S2 = box_tensor(S2, 0, smallest_twist[n], 1)
-
+            # Code below gives the mirror image of S1
+            S2 = DDDVertex(arcs1[0], arcs1[1], arcs1[2]).dual()
         else:
-            for n in arcs2:
-                S2 = box_tensor(S2, 0, AA_id[n], 0)
+            S2 = DDDVertex(arcs2[0], arcs2[1], arcs2[2])
 
-        DehnTwists = {}  # making sure it doesn't compute twice again.
-
-        if fast_test:
-            for arcs, twist in edge_labels:
-                if not (arcs, twist) in DehnTwists:
-                    DehnTwists[(arcs, twist)] \
-                        = PartialDehnTwist(arcs, twist, AA_id[arcs])
-        else:
-            for arcs, twist in edge_labels:
-                if not (arcs, twist) in DehnTwists:
-                    DehnTwists[(arcs, twist)] \
-                        = DDEdge(2*arcs+2, 2*twist, '+')
-
-        for arcs, twist in edge_labels:
-            S1 = box_tensor(S1, 0, DehnTwists[(arcs, twist)], 0)
-
-        # Glue two SolidPairOfPants
-        M = box_tensor(S1, 0, S2, 0)
+        # Glue two vertices
+        M = tensor(S1, 0, S2, 0)
         if self.dual:
             N = M.HH(0, 2)
         else:
@@ -160,13 +127,13 @@ class Genus2Handlebody:
         # is given by the number of strands in the idempotents associated with
         # each generator. We only look at the idempotents corresponding to
         # disks 2 and 3 because they generate the homology group H_2(M).
-        SFH_ranks = {}
+        SFH_ranks= {}
         for gen in N.generators:
-            point = M.count_chords(gen)[0:2]
+            point = M.count_chords(gen)[0: 2]
             try:
                 SFH_ranks[point] += 1
             except KeyError:
-                SFH_ranks[point] = 1
+                SFH_ranks[point]= 1
 
         if check:
             if (self.SFH_rank == len(N.generators)
@@ -270,11 +237,11 @@ class Genus2Handlebody:
             fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(2, 2), dpi=150)
 
             # Draw points_by_rank with nonzero rank
+            m = max(points_by_rank)
             for rank in points_by_rank:
                 xs = [point[0] for point in points_by_rank[rank]]
                 ys = [point[1] for point in points_by_rank[rank]]
                 latex_rank = f'${rank}$'
-                m = max(points_by_rank)
                 ax.scatter(xs, ys, marker=latex_rank, zorder=3, linewidth=0.1,
                            facecolor=plt.cm.inferno(math.sqrt((rank-1)/m)),
                            edgecolor='black')
@@ -309,12 +276,115 @@ class Genus2Handlebody:
                 points_by_rank[rank] = [point]
         return points_by_rank
 
+
+class SolidTorus:
+    def __init__(self, edge_label):
+        assert edge_label[1] % 2 == 0, "Twist must be even."
+
+        self.edge_label = edge_label
+
+        # Does not compute SFH on initialization. Only when you call the
+        # function self.SFH() or when you call self.SFH_rank or self.SFH_ranks
+        self.SFH_rank = None
+        self.SFH_ranks = None
+
+    @property
+    def SFH_rank(self):
+        '''Total rank of SFH of the SolidTorus.'''
+        return self.SFH()[0] if self._SFH_rank == None else self._SFH_rank
+
+    @property
+    def SFH_ranks(self):
+        '''A dictionary that has as keys the spin_c gradings with nontrivial
+        sutured Floer homology. The value associated with a key is the rank
+        of SFH on the corresponding grading (with Z/2 coefficients).'''
+        return self.SFH()[1] if self._SFH_ranks == None else self._SFH_ranks
+
+    @SFH_rank.setter
+    def SFH_rank(self, value):
+        self._SFH_rank = value
+
+    @SFH_ranks.setter
+    def SFH_ranks(self, value):
+        self._SFH_ranks = value
+
+    def SFH_by_rank(self):
+        points_by_rank = {}
+        for point, rank in self.SFH_ranks.items():
+            try:
+                points_by_rank[rank].append(point)
+            except KeyError:
+                points_by_rank[rank] = [point]
+        return points_by_rank
+
+    def SFH(self):
+        '''Computes SFH of the SolidTorus.'''
+
+        sutures, twist = self.edge_label
+        M = tensor(AAEdge(sutures, twist, '+'), 1, DDid(sutures), 0)
+        N = M.HH(0,1)
+
+        SFH_ranks= {}
+        for gen in N.generators:
+            point = M.count_chords(gen)[0]
+            try:
+                SFH_ranks[point] += 1
+            except KeyError:
+                SFH_ranks[point]= 1
+
+        self.SFH_ranks = SFH_ranks
+        self.SFH_rank = len(N.generators)
+
+        return self.SFH_rank, self.SFH_ranks
+
+    def SFH_plot(self, **kwargs):
+        points_by_rank = self.SFH_by_rank()
+
+        el = self.edge_label[0] // 2
+        xlim = (-2, el + 1)
+        ylim = (-1, 1)
+
+        # Draw the plot in a rectangular grid.
+        fig, ax = plt.subplots(ncols=1, nrows=1, figsize=(4, 2), dpi=150)
+
+        # Draw points_by_rank with nonzero rank
+        m = max(points_by_rank)
+        for rank in points_by_rank:
+            xs = points_by_rank[rank]
+            ys = len(xs) * [0]
+            latex_rank = f'${rank}$'
+            ax.scatter(xs, ys, marker=latex_rank, zorder=3, linewidth=0.1,
+                        facecolor=plt.cm.inferno(math.sqrt((rank-1)/m)),
+                        edgecolor='black')
+
+        # Draws a square grid with side given by sides.
+        xs = []
+        for x in range(xlim[0]+1, xlim[1]):
+            if not x in self.SFH_ranks:
+                xs.append(x)
+
+        ys = len(xs) * [0]
+
+        ax.scatter(xs, ys, marker='.', color='black', s=0.5, alpha=0.5)
+
+        ax.set(**kwargs)
+        ax.set_axis_off()
+        ax.set(xlim=xlim, ylim=ylim)
+        ax.set_aspect('equal')
+
+        plt.show()
+        plt.close()
+
+
+
+
+
 #-----------------------------------------------------------------------------#
 # Test Functions
 #-----------------------------------------------------------------------------#
 
 
-def check_SFH_pretzel_knots():
+def check_SFH_pretzel_knots(rlim: int, slim:int, tlim:int, show=False) -> None:
     '''Consider the complement of the Seifert surface of the pretzel knot
     P(2r+1, 2s+1, 2t+1) given by the checkerboard coloring of the canonical
     projection. This function computes the rank of the SFH of the associated
@@ -325,9 +395,9 @@ def check_SFH_pretzel_knots():
     '''
 
     # Case where r,s,t > 0
-    for r in range(1, 4):
-        for s in range(1, 4):
-            for t in range(1, 4):
+    for r in range(1, rlim + 1):
+        for s in range(1, slim + 1):
+            for t in range(1, tlim + 1):
                 M = Genus2Handlebody([(2*(t+r+1), 2*(t+r+1) - 1),
                                       (2*(r+s+1), 2*(r+s+1) - 1),
                                       (2*(s+t+1), 2*(s+t+1) - 1)])
@@ -335,3 +405,6 @@ def check_SFH_pretzel_knots():
                     print(f'Works for r={r}, s={s}, t={t}')
                 else:
                     print(f"Doesn't work for r={r}, s={s}, t={t}")
+
+                if show:
+                    M.SFH_plot()

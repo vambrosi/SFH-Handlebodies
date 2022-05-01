@@ -19,11 +19,6 @@ methods add_vertex or add_edge to build the graph.
 #  Basic Classes
 #-----------------------------------------------------------------------------#
 
-
-from email.errors import InvalidMultipartContentTransferEncodingDefect
-from tokenize import String
-
-
 class CyclicList(list):
     def __getitem__(self, index):
         if isinstance(index, int):
@@ -306,7 +301,7 @@ class SuturedGraph:
         # We add every edge that does not create a loop.
 
         # Variable that stores the final result
-        spanning_tree = set()
+        spanning_tree = []
 
         # Temporary variables used during the search.
         visited_vertices = {root}
@@ -317,7 +312,7 @@ class SuturedGraph:
 
             if not v in visited_vertices:
                 visited_vertices.add(v)
-                spanning_tree.add(e)
+                spanning_tree.append(e)
                 stack += [(e, e(v)) for e in self.incident_to(v)]
 
         return spanning_tree
@@ -331,10 +326,10 @@ class SuturedGraph:
         '''
 
         spanning_tree = self.spanning_tree(root_name=root_name)
-        gens = self.edges.difference(spanning_tree)
+        gens = self.edges.difference(set(spanning_tree))
 
         assert len(gens) == self.genus(), "Graph is not connected."
-        return gens
+        return list(gens)
 
     def genus(self):
         '''

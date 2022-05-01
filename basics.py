@@ -130,7 +130,7 @@ def size(n):
     '''Return sum of the digits in the binary expansion.
     Equivalently, it gives the number of elements in the subset.'''
     k = 0
-    for i in elements(n):
+    for _ in elements(n):
         k += 1
     return k
 
