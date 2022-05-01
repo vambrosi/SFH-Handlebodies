@@ -6,7 +6,6 @@ from constructors import (AAEdge, DDDVertex, DDid)
 from tensor import tensor
 
 import math
-import csv
 import matplotlib.pyplot as plt
 
 #-----------------------------------------------------------------------------#
@@ -69,32 +68,14 @@ class Genus2Handlebody:
     # Computing SFH
     #-------------------------------------------------------------------------#
 
-    def SFH(self, load=False, save=False, check=False):
+    def SFH(self):
         '''Computes the rank of SFH for all spin_c structures.'''
-
-        # If check=True it loads precomputed values to compare with the
-        # new computed values. For debugging purposes only.
-        if check:
-            try:
-                self.SFH_ranks_from_csv()
-                save = False
-
-            except FileNotFoundError:
-                raise Exception('Precomputed values not found.')
-
-        # Loads ranks if possible.
-        elif load:
-            try:
-                return self.SFH_ranks_from_csv()
-            except FileNotFoundError:
-                print('Computing ranks. (Might take a while.)')
-                pass
 
         # edge_labels gives the number of arcs in the arc diagram of each disk
         # and how much we have to rotate the arc diagram before gluing.
 
         labels = [(sutures, twist % sutures)
-                    for sutures, twist in self.edge_labels]
+                  for sutures, twist in self.edge_labels]
 
         # Numbers of arcs for each parametrized disk in the 1st and 2nd ball
         arcs1 = [labels[0][0], labels[1][0], labels[2][0]]
@@ -127,66 +108,15 @@ class Genus2Handlebody:
         # is given by the number of strands in the idempotents associated with
         # each generator. We only look at the idempotents corresponding to
         # disks 2 and 3 because they generate the homology group H_2(M).
-        SFH_ranks= {}
+        SFH_ranks = {}
         for gen in N.generators:
             point = M.count_chords(gen)[0: 2]
             try:
                 SFH_ranks[point] += 1
             except KeyError:
-                SFH_ranks[point]= 1
+                SFH_ranks[point] = 1
 
-        if check:
-            if (self.SFH_rank == len(N.generators)
-                    and self.SFH_ranks == SFH_ranks):
-                print(f'SFH agrees with loaded file for {self.edge_labels}')
-            else:
-                print(f'SFH != from loaded file for {self.edge_labels}')
-        else:
-            self.SFH_rank = len(N.generators)
-            self.SFH_ranks = SFH_ranks
-
-        if save:
-            self.SFH_ranks_to_csv()
         return self.SFH_rank, self.SFH_ranks
-
-    #-------------------------------------------------------------------------#
-    # Loading/Saving computations
-    #-------------------------------------------------------------------------#
-
-    def SFH_ranks_from_csv(self):  # fix
-        el = self.edge_labels
-        name = f'{el[0][0]}-{el[0][1]} ' \
-               + f'{el[1][0]}-{el[1][1]} ' \
-               + f'{el[2][0]}-{el[2][1]}'
-
-        with open(f'./SFHGenus2/{name}.csv', newline='') as csvfile:
-            reader = csv.reader(csvfile, quoting=csv.QUOTE_MINIMAL)
-
-            SFH_ranks = {}
-            for row in reader:
-                SFH_ranks[(int(row[0]), int(row[1]))] = int(row[2])
-
-        self.SFH_ranks = SFH_ranks
-
-        SFH_rank = 0
-        for _, rank in SFH_ranks.items():
-            SFH_rank += rank
-
-        self.SFH_rank = SFH_rank
-
-        return SFH_rank, SFH_ranks
-
-    def SFH_ranks_to_csv(self):
-        el = self.edge_labels
-        name = f'{el[0][0]}-{el[0][1]} ' \
-               + f'{el[1][0]}-{el[1][1]} ' \
-               + f'{el[2][0]}-{el[2][1]}'
-
-        with open(f'./SFHGenus2/{name}.csv', 'w+', newline='') as csvfile:
-            writer = csv.writer(csvfile, quoting=csv.QUOTE_MINIMAL)
-
-            for point, rank in self.SFH_ranks.items():
-                writer.writerow([point[0], point[1], rank])
 
     #-------------------------------------------------------------------------#
     # Plotting SFH ranks
@@ -322,15 +252,15 @@ class SolidTorus:
 
         sutures, twist = self.edge_label
         M = tensor(AAEdge(sutures, twist, '+'), 1, DDid(sutures), 0)
-        N = M.HH(0,1)
+        N = M.HH(0, 1)
 
-        SFH_ranks= {}
+        SFH_ranks = {}
         for gen in N.generators:
             point = M.count_chords(gen)[0]
             try:
                 SFH_ranks[point] += 1
             except KeyError:
-                SFH_ranks[point]= 1
+                SFH_ranks[point] = 1
 
         self.SFH_ranks = SFH_ranks
         self.SFH_rank = len(N.generators)
@@ -354,8 +284,8 @@ class SolidTorus:
             ys = len(xs) * [0]
             latex_rank = f'${rank}$'
             ax.scatter(xs, ys, marker=latex_rank, zorder=3, linewidth=0.1,
-                        facecolor=plt.cm.inferno(math.sqrt((rank-1)/m)),
-                        edgecolor='black')
+                       facecolor=plt.cm.inferno(math.sqrt((rank-1)/m)),
+                       edgecolor='black')
 
         # Draws a square grid with side given by sides.
         xs = []
@@ -376,15 +306,12 @@ class SolidTorus:
         plt.close()
 
 
-
-
-
 #-----------------------------------------------------------------------------#
 # Test Functions
 #-----------------------------------------------------------------------------#
 
 
-def check_SFH_pretzel_knots(rlim: int, slim:int, tlim:int, show=False) -> None:
+def check_SFH_pretzel_knots(rlim: int, slim: int, tlim: int, show=False) -> None:
     '''Consider the complement of the Seifert surface of the pretzel knot
     P(2r+1, 2s+1, 2t+1) given by the checkerboard coloring of the canonical
     projection. This function computes the rank of the SFH of the associated

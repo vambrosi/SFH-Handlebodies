@@ -34,6 +34,7 @@ def DDid(sutures):
     return MultiModule(generators=generators, arrows=arrows,
                        action_types=action_types)
 
+
 @lru_cache(maxsize=64)
 def AAHomology(sutures):
     # Module parameter
@@ -60,6 +61,7 @@ def AAHomology(sutures):
 
     return MultiModule(generators=gens, arrows=arrows,
                        action_types=[('A', 'left'), ('A', 'right')])
+
 
 @lru_cache(maxsize=64)
 def DDEdge(sutures, twist, sign):
@@ -143,6 +145,7 @@ def DDEdge(sutures, twist, sign):
         else:
             return M.dual()
 
+
 @lru_cache(maxsize=64)
 def AAEdge(sutures, twist, sign):
     if sign == '+':
@@ -163,6 +166,7 @@ def AAEdge(sutures, twist, sign):
 #-----------------------------------------------------------------------------#
 # Trimodule
 #-----------------------------------------------------------------------------#
+
 
 @lru_cache(maxsize=64)
 class DDDVertex(MultiModule):

@@ -142,6 +142,7 @@ def reverse(n, m):
 def list_subset(n):
     return list(elements(n))
 
+
 def differ_by_two(S, T):
     ''' This function answer the question: is the cardinality of the symmetric
     difference of those two sets equal to two?'''

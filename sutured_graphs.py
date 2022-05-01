@@ -19,6 +19,7 @@ methods add_vertex or add_edge to build the graph.
 #  Basic Classes
 #-----------------------------------------------------------------------------#
 
+
 class CyclicList(list):
     def __getitem__(self, index):
         if isinstance(index, int):
