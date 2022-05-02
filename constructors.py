@@ -412,14 +412,28 @@ class DDDVertex(MultiModule):
                         self.arrows[(S, T, U)][(A, B, C)] \
                             = [[H(S, A), H(T, B), H(U, C)]]
 
-        # Rank corresponding to each grading
-        self.ranks = {}
-        for gen in self.generators:
-            b = self.count_chords(gen)
-            try:
-                self.ranks[b] += 1
-            except KeyError:
-                self.ranks[b] = 1
+    def mirror(self):
+        ''' Returns the DDDModule with the opposite sign but same labels.'''
+        M = self.dual()
+        at = M.action_types
+        at[1], at[2] = at[2], at[1]
+
+        # Exchanging idempotent positions
+        gens = M.generators
+        for gen in M.generators:
+            gens[gen][1], gens[gen][2] = gens[gen][2], gens[gen][1]
+
+        # Exchanging actions 1 and 2
+        arrows = M.arrows
+        for gen1 in M.arrows:
+            for gen2 in M.arrows[gen1]:
+                for i, _ in enumerate(M.arrows[gen1][gen2]):
+                    arrows[gen1][gen2][i][1], arrows[gen1][gen2][i][2] = \
+                        arrows[gen1][gen2][i][2], arrows[gen1][gen2][i][1]
+
+        M.generators = gens
+        M.arrows = arrows
+        return M
 
 
 #-----------------------------------------------------------------------------#
