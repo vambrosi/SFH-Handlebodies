@@ -116,6 +116,9 @@ class Genus2Handlebody:
             except KeyError:
                 SFH_ranks[point] = 1
 
+        self.SFH_ranks = SFH_ranks
+        self.SFH_rank = len(N.generators)
+
         return self.SFH_rank, self.SFH_ranks
 
     #-------------------------------------------------------------------------#
