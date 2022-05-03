@@ -169,252 +169,256 @@ def AAEdge(sutures, twist, sign):
 
 
 @lru_cache(maxsize=64)
-class DDDVertex(MultiModule):
-    def __init__(self, sutures1, sutures2, sutures3):
-        self.action_types = [('D', 'left'), ('D', 'left'), ('D', 'left')]
-        self.arcs = [sutures1//2 - 1, sutures2//2 - 1, sutures3//2 - 1]
-        self.alpha_arcs = [(self.arcs[0] - self.arcs[1] + self.arcs[2])//2,
-                           (self.arcs[1] - self.arcs[2] + self.arcs[0])//2,
-                           (self.arcs[2] - self.arcs[0] + self.arcs[1])//2]
+def DDDVertex(sutures1, sutures2, sutures3, sign):
+    assert sign == '+' or sign == '-', 'Sign must be + or -.s'
 
-        for arcs in self.alpha_arcs:
-            if arcs < 0:
-                raise Exception('Invalid parameters.')
+    action_types = [('D', 'left'), ('D', 'left'), ('D', 'left')]
+    arcs = [sutures1//2 - 1, sutures2//2 - 1, sutures3//2 - 1]
+    alpha_arcs = [(arcs[0] - arcs[1] + arcs[2])//2,
+                  (arcs[1] - arcs[2] + arcs[0])//2,
+                  (arcs[2] - arcs[0] + arcs[1])//2]
 
-        mid_arcs = [1 << arcs for arcs in self.alpha_arcs]
+    for a_arcs in alpha_arcs:
+        if a_arcs < 0:
+            raise Exception('Invalid parameters.')
 
-        # Initializing generators and arrows in the MultiModule
-        self.generators = {}
-        self.arrows = {}
+    mid_arcs = [1 << arcs for arcs in alpha_arcs]
 
-        # Case where R_+ has two triangular regions.
-        if int(self.arcs[0] + self.arcs[1] + self.arcs[2]) % 2:
+    # Initializing generators and arrows in the MultiModule
+    generators = {}
+    arrows = {}
 
-            for S1 in range(mid_arcs[0]):
-                U2 = (d_complement(S1, self.alpha_arcs[0])
-                      << self.alpha_arcs[2] << 1)
+    # Case where R_+ has two triangular regions.
+    if int(arcs[0] + arcs[1] + arcs[2]) % 2:
 
-                for T1 in range(mid_arcs[1]):
-                    S2 = (d_complement(T1, self.alpha_arcs[1])
-                          << self.alpha_arcs[0] << 1)
+        for S1 in range(mid_arcs[0]):
+            U2 = (d_complement(S1, alpha_arcs[0])
+                  << alpha_arcs[2] << 1)
 
-                    for U1 in range(mid_arcs[2]):
-                        T2 = (d_complement(U1, self.alpha_arcs[2])
-                              << self.alpha_arcs[1] << 1)
+            for T1 in range(mid_arcs[1]):
+                S2 = (d_complement(T1, alpha_arcs[1])
+                      << alpha_arcs[0] << 1)
 
-                        S = S1 + mid_arcs[0] + S2
-                        T = T1 + mid_arcs[1] + T2
-                        U = U1 + U2
+                for U1 in range(mid_arcs[2]):
+                    T2 = (d_complement(U1, alpha_arcs[2])
+                          << alpha_arcs[1] << 1)
 
-                        self.generators[(S, T, U)] = [I(S), I(T), I(U)]
-                        self.arrows[(S, T, U)] = {}
+                    S = S1 + mid_arcs[0] + S2
+                    T = T1 + mid_arcs[1] + T2
+                    U = U1 + U2
 
-                        # Octogonal regions between disk 2 and 0
-                        for (A1, C2) in shift_ones_d(S1, self.alpha_arcs[0]):
-                            A = A1 + mid_arcs[0] + S2
-                            C = U1 + (C2 << self.alpha_arcs[2] << 1)
-                            self.arrows[(S, T, U)][(A, T, C)] = \
-                                [[H(S, A), I(T), H(U, C)]]
+                    generators[(S, T, U)] = [I(S), I(T), I(U)]
+                    arrows[(S, T, U)] = {}
 
-                        # Octogonal regions between disk 0 and 1
-                        for (B1, A2) in shift_ones_d(T1, self.alpha_arcs[1]):
-                            A = S1 + mid_arcs[0] + \
-                                (A2 << self.alpha_arcs[0] << 1)
-                            B = B1 + mid_arcs[1] + T2
-                            self.arrows[(S, T, U)][(A, B, U)] = \
-                                [[H(S, A), H(T, B), I(U)]]
+                    # Octogonal regions between disk 2 and 0
+                    for (A1, C2) in shift_ones_d(S1, alpha_arcs[0]):
+                        A = A1 + mid_arcs[0] + S2
+                        C = U1 + (C2 << alpha_arcs[2] << 1)
+                        arrows[(S, T, U)][(A, T, C)] = \
+                            [[H(S, A), I(T), H(U, C)]]
 
-                        # Octogonal regions between disk 1 and 2
-                        for (C1, B2) in shift_ones_d(U1, self.alpha_arcs[2]):
-                            B = T1 + mid_arcs[1] + \
-                                (B2 << self.alpha_arcs[1] << 1)
-                            C = C1 + U2
-                            self.arrows[(S, T, U)][(S, B, C)] = \
-                                [[I(S), H(T, B), H(U, C)]]
+                    # Octogonal regions between disk 0 and 1
+                    for (B1, A2) in shift_ones_d(T1, alpha_arcs[1]):
+                        A = S1 + mid_arcs[0] + \
+                            (A2 << alpha_arcs[0] << 1)
+                        B = B1 + mid_arcs[1] + T2
+                        arrows[(S, T, U)][(A, B, U)] = \
+                            [[H(S, A), H(T, B), I(U)]]
 
-                        S = S1 + S2
-                        T = T1 + mid_arcs[1] + T2
-                        U = U1 + mid_arcs[2] + U2
+                    # Octogonal regions between disk 1 and 2
+                    for (C1, B2) in shift_ones_d(U1, alpha_arcs[2]):
+                        B = T1 + mid_arcs[1] + \
+                            (B2 << alpha_arcs[1] << 1)
+                        C = C1 + U2
+                        arrows[(S, T, U)][(S, B, C)] = \
+                            [[I(S), H(T, B), H(U, C)]]
 
-                        self.generators[(S, T, U)] = [I(S), I(T), I(U)]
-                        self.arrows[(S, T, U)] = {}
+                    S = S1 + S2
+                    T = T1 + mid_arcs[1] + T2
+                    U = U1 + mid_arcs[2] + U2
 
-                        # Octogonal regions between disk 2 and 0
-                        for (A1, C2) in shift_ones_d(S1, self.alpha_arcs[0]):
-                            A = A1 + S2
-                            C = U1 + mid_arcs[2] + \
-                                (C2 << self.alpha_arcs[2] << 1)
-                            self.arrows[(S, T, U)][(A, T, C)] = \
-                                [[H(S, A), I(T), H(U, C)]]
+                    generators[(S, T, U)] = [I(S), I(T), I(U)]
+                    arrows[(S, T, U)] = {}
 
-                        # Octogonal regions between disk 0 and 1
-                        for (B1, A2) in shift_ones_d(T1, self.alpha_arcs[1]):
-                            A = S1 + (A2 << self.alpha_arcs[0] << 1)
-                            B = B1 + mid_arcs[1] + T2
-                            self.arrows[(S, T, U)][(A, B, U)] = \
-                                [[H(S, A), H(T, B), I(U)]]
+                    # Octogonal regions between disk 2 and 0
+                    for (A1, C2) in shift_ones_d(S1, alpha_arcs[0]):
+                        A = A1 + S2
+                        C = U1 + mid_arcs[2] + \
+                            (C2 << alpha_arcs[2] << 1)
+                        arrows[(S, T, U)][(A, T, C)] = \
+                            [[H(S, A), I(T), H(U, C)]]
 
-                        # Octogonal regions between disk 1 and 2
-                        for (C1, B2) in shift_ones_d(U1, self.alpha_arcs[2]):
-                            B = T1 + mid_arcs[1] + \
-                                (B2 << self.alpha_arcs[1] << 1)
-                            C = C1 + mid_arcs[2] + U2
-                            self.arrows[(S, T, U)][(S, B, C)] = \
-                                [[I(S), H(T, B), H(U, C)]]
+                    # Octogonal regions between disk 0 and 1
+                    for (B1, A2) in shift_ones_d(T1, alpha_arcs[1]):
+                        A = S1 + (A2 << alpha_arcs[0] << 1)
+                        B = B1 + mid_arcs[1] + T2
+                        arrows[(S, T, U)][(A, B, U)] = \
+                            [[H(S, A), H(T, B), I(U)]]
 
-                        S = S1 + mid_arcs[0] + S2
-                        T = T1 + T2
-                        U = U1 + mid_arcs[2] + U2
+                    # Octogonal regions between disk 1 and 2
+                    for (C1, B2) in shift_ones_d(U1, alpha_arcs[2]):
+                        B = T1 + mid_arcs[1] + \
+                            (B2 << alpha_arcs[1] << 1)
+                        C = C1 + mid_arcs[2] + U2
+                        arrows[(S, T, U)][(S, B, C)] = \
+                            [[I(S), H(T, B), H(U, C)]]
 
-                        self.generators[(S, T, U)] = [I(S), I(T), I(U)]
-                        self.arrows[(S, T, U)] = {}
+                    S = S1 + mid_arcs[0] + S2
+                    T = T1 + T2
+                    U = U1 + mid_arcs[2] + U2
 
-                        # Octogonal regions between disk 2 and 0
-                        for (A1, C2) in shift_ones_d(S1, self.alpha_arcs[0]):
-                            A = A1 + mid_arcs[0] + S2
-                            C = U1 + mid_arcs[2] + \
-                                (C2 << self.alpha_arcs[2] << 1)
-                            self.arrows[(S, T, U)][(A, T, C)] = \
-                                [[H(S, A), I(T), H(U, C)]]
+                    generators[(S, T, U)] = [I(S), I(T), I(U)]
+                    arrows[(S, T, U)] = {}
 
-                        # Octogonal regions between disk 0 and 1
-                        for (B1, A2) in shift_ones_d(T1, self.alpha_arcs[1]):
-                            A = S1 + mid_arcs[0] + \
-                                (A2 << self.alpha_arcs[0] << 1)
-                            B = B1 + T2
-                            self.arrows[(S, T, U)][(A, B, U)] = \
-                                [[H(S, A), H(T, B), I(U)]]
+                    # Octogonal regions between disk 2 and 0
+                    for (A1, C2) in shift_ones_d(S1, alpha_arcs[0]):
+                        A = A1 + mid_arcs[0] + S2
+                        C = U1 + mid_arcs[2] + \
+                            (C2 << alpha_arcs[2] << 1)
+                        arrows[(S, T, U)][(A, T, C)] = \
+                            [[H(S, A), I(T), H(U, C)]]
 
-                        # Octogonal regions between disk 1 and 2
-                        for (C1, B2) in shift_ones_d(U1, self.alpha_arcs[2]):
-                            B = T1 + (B2 << self.alpha_arcs[1] << 1)
-                            C = C1 + mid_arcs[2] + U2
-                            self.arrows[(S, T, U)][(S, B, C)] = \
-                                [[I(S), H(T, B), H(U, C)]]
+                    # Octogonal regions between disk 0 and 1
+                    for (B1, A2) in shift_ones_d(T1, alpha_arcs[1]):
+                        A = S1 + mid_arcs[0] + \
+                            (A2 << alpha_arcs[0] << 1)
+                        B = B1 + T2
+                        arrows[(S, T, U)][(A, B, U)] = \
+                            [[H(S, A), H(T, B), I(U)]]
 
-            # Arrows corresponding to the middle regions.
-            last_arcs = [arcs >> 1 for arcs in mid_arcs]
+                    # Octogonal regions between disk 1 and 2
+                    for (C1, B2) in shift_ones_d(U1, alpha_arcs[2]):
+                        B = T1 + (B2 << alpha_arcs[1] << 1)
+                        C = C1 + mid_arcs[2] + U2
+                        arrows[(S, T, U)][(S, B, C)] = \
+                            [[I(S), H(T, B), H(U, C)]]
 
-            # Middle octogonal region between disk 2 and 0
-            for S1 in range(last_arcs[0]):
-                for T1 in range(mid_arcs[1]):
-                    for U1 in range(mid_arcs[2]):
-                        S2 = d_complement(T1, self.alpha_arcs[1])
-                        T2 = d_complement(U1, self.alpha_arcs[2])
-                        U2 = d_complement(S1, self.alpha_arcs[0]-1)
+        # Arrows corresponding to the middle regions.
+        last_arcs = [arcs >> 1 for arcs in mid_arcs]
 
-                        S = S1 + last_arcs[0] + (S2 << self.alpha_arcs[0] << 1)
-                        T = T1 + mid_arcs[1] + (T2 << self.alpha_arcs[1] << 1)
-                        U = U1 + mid_arcs[2] + (U2 << self.alpha_arcs[2] << 2)
+        # Middle octogonal region between disk 2 and 0
+        for S1 in range(last_arcs[0]):
+            for T1 in range(mid_arcs[1]):
+                for U1 in range(mid_arcs[2]):
+                    S2 = d_complement(T1, alpha_arcs[1])
+                    T2 = d_complement(U1, alpha_arcs[2])
+                    U2 = d_complement(S1, alpha_arcs[0]-1)
 
-                        A = S + last_arcs[0]
-                        C = U + mid_arcs[2]
+                    S = S1 + last_arcs[0] + (S2 << alpha_arcs[0] << 1)
+                    T = T1 + mid_arcs[1] + (T2 << alpha_arcs[1] << 1)
+                    U = U1 + mid_arcs[2] + (U2 << alpha_arcs[2] << 2)
 
-                        self.arrows[(S, T, U)][(A, T, C)] \
-                            = [[H(S, A), I(T), H(U, C)]]
+                    A = S + last_arcs[0]
+                    C = U + mid_arcs[2]
 
-            # Middle octogonal region between disk 0 and 1
-            for S1 in range(mid_arcs[0]):
-                for T1 in range(last_arcs[1]):
-                    for U1 in range(mid_arcs[2]):
-                        S2 = d_complement(T1, self.alpha_arcs[1]-1)
-                        T2 = d_complement(U1, self.alpha_arcs[2])
-                        U2 = d_complement(S1, self.alpha_arcs[0])
+                    arrows[(S, T, U)][(A, T, C)] \
+                        = [[H(S, A), I(T), H(U, C)]]
 
-                        S = S1 + mid_arcs[0] + (S2 << self.alpha_arcs[0] << 2)
-                        T = T1 + last_arcs[1] + (T2 << self.alpha_arcs[1] << 1)
-                        U = U1 + mid_arcs[2] + (U2 << self.alpha_arcs[2] << 1)
+        # Middle octogonal region between disk 0 and 1
+        for S1 in range(mid_arcs[0]):
+            for T1 in range(last_arcs[1]):
+                for U1 in range(mid_arcs[2]):
+                    S2 = d_complement(T1, alpha_arcs[1]-1)
+                    T2 = d_complement(U1, alpha_arcs[2])
+                    U2 = d_complement(S1, alpha_arcs[0])
 
-                        A = S + mid_arcs[0]
-                        B = T + last_arcs[1]
+                    S = S1 + mid_arcs[0] + (S2 << alpha_arcs[0] << 2)
+                    T = T1 + last_arcs[1] + (T2 << alpha_arcs[1] << 1)
+                    U = U1 + mid_arcs[2] + (U2 << alpha_arcs[2] << 1)
 
-                        self.arrows[(S, T, U)][(A, B, U)] \
-                            = [[H(S, A), H(T, B), I(U)]]
+                    A = S + mid_arcs[0]
+                    B = T + last_arcs[1]
 
-            # Middle octogonal region between disk 1 and 2
-            for S1 in range(mid_arcs[0]):
-                for T1 in range(mid_arcs[1]):
-                    for U1 in range(last_arcs[2]):
-                        S2 = d_complement(T1, self.alpha_arcs[1])
-                        T2 = d_complement(U1, self.alpha_arcs[2]-1)
-                        U2 = d_complement(S1, self.alpha_arcs[0])
+                    arrows[(S, T, U)][(A, B, U)] \
+                        = [[H(S, A), H(T, B), I(U)]]
 
-                        S = S1 + mid_arcs[0] + (S2 << self.alpha_arcs[0] << 1)
-                        T = T1 + mid_arcs[1] + (T2 << self.alpha_arcs[1] << 2)
-                        U = U1 + last_arcs[2] + (U2 << self.alpha_arcs[2] << 1)
+        # Middle octogonal region between disk 1 and 2
+        for S1 in range(mid_arcs[0]):
+            for T1 in range(mid_arcs[1]):
+                for U1 in range(last_arcs[2]):
+                    S2 = d_complement(T1, alpha_arcs[1])
+                    T2 = d_complement(U1, alpha_arcs[2]-1)
+                    U2 = d_complement(S1, alpha_arcs[0])
 
-                        B = T + mid_arcs[1]
-                        C = U + last_arcs[2]
+                    S = S1 + mid_arcs[0] + (S2 << alpha_arcs[0] << 1)
+                    T = T1 + mid_arcs[1] + (T2 << alpha_arcs[1] << 2)
+                    U = U1 + last_arcs[2] + (U2 << alpha_arcs[2] << 1)
 
-                        self.arrows[(S, T, U)][(S, B, C)] \
-                            = [[I(S), H(T, B), H(U, C)]]
+                    B = T + mid_arcs[1]
+                    C = U + last_arcs[2]
 
-        # Case where R_+ has one triangular region.
-        else:
-            for S1 in range(mid_arcs[0]):
-                for T1 in range(mid_arcs[1]):
-                    for U1 in range(mid_arcs[2]):
-                        S2 = (d_complement(T1, self.alpha_arcs[1])
-                              << self.alpha_arcs[0])
-                        T2 = (d_complement(U1, self.alpha_arcs[2])
-                              << self.alpha_arcs[1])
-                        U2 = (d_complement(S1, self.alpha_arcs[0])
-                              << self.alpha_arcs[2])
+                    arrows[(S, T, U)][(S, B, C)] \
+                        = [[I(S), H(T, B), H(U, C)]]
 
-                        S = S1 + S2
-                        T = T1 + T2
-                        U = U1 + U2
+    # Case where R_+ has one triangular region.
+    else:
+        for S1 in range(mid_arcs[0]):
+            for T1 in range(mid_arcs[1]):
+                for U1 in range(mid_arcs[2]):
+                    S2 = (d_complement(T1, alpha_arcs[1])
+                          << alpha_arcs[0])
+                    T2 = (d_complement(U1, alpha_arcs[2])
+                          << alpha_arcs[1])
+                    U2 = (d_complement(S1, alpha_arcs[0])
+                          << alpha_arcs[2])
 
-                        self.generators[(S, T, U)] = [I(S), I(T), I(U)]
-                        self.arrows[(S, T, U)] = {}
+                    S = S1 + S2
+                    T = T1 + T2
+                    U = U1 + U2
 
-                        # Octogonal regions between disk 2 and 0
-                        for (A1, C2) in shift_ones_d(S1, self.alpha_arcs[0]):
-                            A = A1 + S2
-                            C = U1 + (C2 << self.alpha_arcs[2])
-                            self.arrows[(S, T, U)][(A, T, C)] = \
-                                [[H(S, A), I(T), H(U, C)]]
+                    generators[(S, T, U)] = [I(S), I(T), I(U)]
+                    arrows[(S, T, U)] = {}
 
-                        # Octogonal regions between disk 0 and 1
-                        for (B1, A2) in shift_ones_d(T1, self.alpha_arcs[1]):
-                            A = S1 + (A2 << self.alpha_arcs[0])
-                            B = B1 + T2
-                            self.arrows[(S, T, U)][(A, B, U)] = \
-                                [[H(S, A), H(T, B), I(U)]]
+                    # Octogonal regions between disk 2 and 0
+                    for (A1, C2) in shift_ones_d(S1, alpha_arcs[0]):
+                        A = A1 + S2
+                        C = U1 + (C2 << alpha_arcs[2])
+                        arrows[(S, T, U)][(A, T, C)] = \
+                            [[H(S, A), I(T), H(U, C)]]
 
-                        # Octogonal regions between disk 1 and 2
-                        for (C1, B2) in shift_ones_d(U1, self.alpha_arcs[2]):
-                            B = T1 + (B2 << self.alpha_arcs[1])
-                            C = C1 + U2
-                            self.arrows[(S, T, U)][(S, B, C)] = \
-                                [[I(S), H(T, B), H(U, C)]]
+                    # Octogonal regions between disk 0 and 1
+                    for (B1, A2) in shift_ones_d(T1, alpha_arcs[1]):
+                        A = S1 + (A2 << alpha_arcs[0])
+                        B = B1 + T2
+                        arrows[(S, T, U)][(A, B, U)] = \
+                            [[H(S, A), H(T, B), I(U)]]
 
-            # Arrows corresponding to the middle region.
-            last_arcs = [arcs >> 1 for arcs in mid_arcs]
+                    # Octogonal regions between disk 1 and 2
+                    for (C1, B2) in shift_ones_d(U1, alpha_arcs[2]):
+                        B = T1 + (B2 << alpha_arcs[1])
+                        C = C1 + U2
+                        arrows[(S, T, U)][(S, B, C)] = \
+                            [[I(S), H(T, B), H(U, C)]]
 
-            for S1 in range(last_arcs[0]):
-                U2 = d_complement(S1, self.alpha_arcs[0]-1)
+        # Arrows corresponding to the middle region.
+        last_arcs = [arcs >> 1 for arcs in mid_arcs]
 
-                for T1 in range(last_arcs[1]):
-                    S2 = d_complement(T1, self.alpha_arcs[1]-1)
+        for S1 in range(last_arcs[0]):
+            U2 = d_complement(S1, alpha_arcs[0]-1)
 
-                    for U1 in range(last_arcs[2]):
-                        T2 = d_complement(U1, self.alpha_arcs[2]-1)
+            for T1 in range(last_arcs[1]):
+                S2 = d_complement(T1, alpha_arcs[1]-1)
 
-                        S = S1 + last_arcs[0] + (S2 << self.alpha_arcs[0] << 1)
-                        T = T1 + last_arcs[1] + (T2 << self.alpha_arcs[1] << 1)
-                        U = U1 + last_arcs[2] + (U2 << self.alpha_arcs[2] << 1)
+                for U1 in range(last_arcs[2]):
+                    T2 = d_complement(U1, alpha_arcs[2]-1)
 
-                        A = S + last_arcs[0]
-                        B = T + last_arcs[1]
-                        C = U + last_arcs[2]
+                    S = S1 + last_arcs[0] + (S2 << alpha_arcs[0] << 1)
+                    T = T1 + last_arcs[1] + (T2 << alpha_arcs[1] << 1)
+                    U = U1 + last_arcs[2] + (U2 << alpha_arcs[2] << 1)
 
-                        self.arrows[(S, T, U)][(A, B, C)] \
-                            = [[H(S, A), H(T, B), H(U, C)]]
+                    A = S + last_arcs[0]
+                    B = T + last_arcs[1]
+                    C = U + last_arcs[2]
 
-    def mirror(self):
-        ''' Returns the DDDModule with the opposite sign but same labels.'''
-        M = self.dual()
+                    arrows[(S, T, U)][(A, B, C)] \
+                        = [[H(S, A), H(T, B), H(U, C)]]
+
+    if sign == '+':
+        return MultiModule(generators=generators, arrows=arrows,
+                           action_types=action_types)
+    else:
+        M = MultiModule(generators=generators, arrows=arrows,
+                        action_types=action_types).dual()
         at = M.action_types
         at[1], at[2] = at[2], at[1]
 
@@ -434,6 +438,30 @@ class DDDVertex(MultiModule):
         M.generators = gens
         M.arrows = arrows
         return M
+
+
+def mirror(self):
+    ''' Returns the DDDModule with the opposite sign but same labels.'''
+    M = self.dual()
+    at = M.action_types
+    at[1], at[2] = at[2], at[1]
+
+    # Exchanging idempotent positions
+    gens = M.generators
+    for gen in M.generators:
+        gens[gen][1], gens[gen][2] = gens[gen][2], gens[gen][1]
+
+    # Exchanging actions 1 and 2
+    arrows = M.arrows
+    for gen1 in M.arrows:
+        for gen2 in M.arrows[gen1]:
+            for i, _ in enumerate(M.arrows[gen1][gen2]):
+                arrows[gen1][gen2][i][1], arrows[gen1][gen2][i][2] = \
+                    arrows[gen1][gen2][i][2], arrows[gen1][gen2][i][1]
+
+    M.generators = gens
+    M.arrows = arrows
+    return M
 
 
 #-----------------------------------------------------------------------------#

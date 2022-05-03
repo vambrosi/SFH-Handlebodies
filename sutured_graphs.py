@@ -331,11 +331,7 @@ class SuturedGraph:
             assert self.valence(a) == 3, 'Vertex must have valence 3.'
             e1, e2, e3 = self.incidence[a]
 
-            M = DDDVertex(e1.sutures, e2.sutures, e3.sutures)
-            if a.label == '+':
-                return M
-            else:
-                return M.mirror()
+            return DDDVertex(e1.sutures, e2.sutures, e3.sutures, a.label)
 
         elif isinstance(a, Edge):
             return AAEdge(a.sutures, a.twist, a[0].label)
@@ -472,8 +468,6 @@ class SuturedGraph:
         not_visited.remove(root)
         M_left = self.BS(root)
         left_slots = self.incident_to(root)
-        print(left_slots)
-        print(M_left)
 
         while not_visited:
             # Pop the first vertex or edge that is not visited
@@ -500,8 +494,6 @@ class SuturedGraph:
             # to the corresponing slot on the right.
             M_left = tensor(M_left, left_index, M_right, right_index)
             left_slots = left_slots + right_slots
-            print(left_slots)
-            print(M_left)
 
         N = M_left
 
