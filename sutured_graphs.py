@@ -111,7 +111,7 @@ class Vertex(tuple):
     Vertex is a tuple (name, label). Name should be a string or an int, and
     label should be '+' or '-'.
     '''
-    def __new__(cls, name, label):
+    def __new__(cls, name: int | str, label: str):
         assert isinstance(name, int | str), "Name should be string or integer."
         assert label == '+' or label == '-', "Label should be '+' or '-'."
         return tuple.__new__(cls, (name, label))
@@ -261,10 +261,12 @@ class SuturedGraph:
 
             result = []
             for e in self.incidence[obj]:
-                if e[0] == obj:
+                if e[0] == obj and (not (e,0) in result):
                     result.append((e, 0))
                 elif e[1] == obj:
                     result.append((e, 1))
+                else:
+                    raise Exception(f'self.incidence[{obj}] is inconsistent.')
 
             return result
 
@@ -273,6 +275,9 @@ class SuturedGraph:
 
             for v in obj.incident_to():
                 i = self.incidence[v].index(obj)
+                # If index is in result pick the next one.
+                if (v, i) in result:
+                    i = self.incidence[v].index(obj, i+1)
                 result.append((v, i))
 
             return result
@@ -327,7 +332,10 @@ class SuturedGraph:
             e1, e2, e3 = self.incidence[a]
 
             M = DDDVertex(e1.sutures, e2.sutures, e3.sutures)
-            return M if a.label == '+' else M.mirror()
+            if a.label == '+':
+                return M
+            else:
+                return M.mirror()
 
         elif isinstance(a, Edge):
             return AAEdge(a.sutures, a.twist, a[0].label)
@@ -464,6 +472,8 @@ class SuturedGraph:
         not_visited.remove(root)
         M_left = self.BS(root)
         left_slots = self.incident_to(root)
+        print(left_slots)
+        print(M_left)
 
         while not_visited:
             # Pop the first vertex or edge that is not visited
@@ -490,23 +500,34 @@ class SuturedGraph:
             # to the corresponing slot on the right.
             M_left = tensor(M_left, left_index, M_right, right_index)
             left_slots = left_slots + right_slots
+            print(left_slots)
+            print(M_left)
 
         N = M_left
 
+        # Stores positions of open edges (generators of pi_1)
+        number_open_edges = len(left_slots) // 2
+        self.open_edges = []
+
         # Identifies matched pair and apply HH to them.
-        number_of_pairs = len(left_slots) // 2
+        # And computes self.open_edges
         while left_slots:
             slot2 = left_slots.pop()
             slot2_index = len(left_slots)
 
             slot1_index = left_slots.index(self(*slot2))
-            left_slots.pop(slot1_index)
+            slot1 = left_slots.pop(slot1_index)
+
+            if isinstance(slot1[0], Edge):
+                self.open_edges.append(slot1)
+            else:
+                self.open_edges.append(slot2)
 
             N = N.HH(slot1_index, slot2_index)
 
         SFH_ranks = {}
         for gen in N.generators:
-            point = M_left.count_chords(gen)[number_of_pairs::]
+            point = M_left.count_chords(gen)[number_open_edges::]
             try:
                 SFH_ranks[point] += 1
             except KeyError:
