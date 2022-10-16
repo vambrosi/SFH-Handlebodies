@@ -82,7 +82,7 @@ class Genus2Handlebody:
         arcs2 = [labels[0][0], labels[2][0], labels[1][0]]
 
         # DDDModule for the 1st ball
-        S1 = DDDVertex(arcs1[0], arcs1[1], arcs1[2])
+        S1 = DDDVertex(arcs1[0], arcs1[1], arcs1[2], '+')
 
         # Add twists
         for sutures, twist in labels:
@@ -91,9 +91,9 @@ class Genus2Handlebody:
 
         if self.dual:
             # Code below gives the mirror image of S1
-            S2 = DDDVertex(arcs1[0], arcs1[1], arcs1[2]).dual()
+            S2 = DDDVertex(arcs1[0], arcs1[1], arcs1[2], '+').dual()
         else:
-            S2 = DDDVertex(arcs2[0], arcs2[1], arcs2[2])
+            S2 = DDDVertex(arcs2[0], arcs2[1], arcs2[2], '+')
 
         # Glue two vertices
         M = tensor(S1, 0, S2, 0)

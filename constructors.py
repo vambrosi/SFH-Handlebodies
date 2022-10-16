@@ -170,10 +170,15 @@ def AAEdge(sutures, twist, sign):
 
 @lru_cache(maxsize=64)
 def DDDVertex(sutures1, sutures2, sutures3, sign):
-    assert sign == '+' or sign == '-', 'Sign must be + or -.s'
-
     action_types = [('D', 'left'), ('D', 'left'), ('D', 'left')]
-    arcs = [sutures1//2 - 1, sutures2//2 - 1, sutures3//2 - 1]
+
+    if sign == '+':
+        arcs = [sutures1//2 - 1, sutures2//2 - 1, sutures3//2 - 1]
+    elif sign == '-':
+        arcs = [sutures1//2 - 1, sutures3//2 - 1, sutures2//2 - 1]
+    else:
+        raise Exception('Sign must be + or -.')
+
     alpha_arcs = [(arcs[0] - arcs[1] + arcs[2])//2,
                   (arcs[1] - arcs[2] + arcs[0])//2,
                   (arcs[2] - arcs[0] + arcs[1])//2]

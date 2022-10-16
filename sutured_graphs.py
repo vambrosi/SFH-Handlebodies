@@ -468,6 +468,7 @@ class SuturedGraph:
         not_visited.remove(root)
         M_left = self.BS(root)
         left_slots = self.incident_to(root)
+        left = left_slots.copy()
 
         while not_visited:
             # Pop the first vertex or edge that is not visited
@@ -482,6 +483,7 @@ class SuturedGraph:
             M_right = self.BS(left_obj)
             right_slots = self.incident_to(left_obj)
             not_visited.remove(left_obj)
+            right = right_slots.copy()
 
             # Pop the vertex or edge that is matched to left_slot
             for j, (obj, pos) in enumerate(right_slots):
@@ -490,12 +492,26 @@ class SuturedGraph:
                     right_slots.pop(j)
                     break
 
+            signatureL = [M_left.count_chords(gen) for gen in M_left.generators]
+            signatureL = list(map(max, zip(*signatureL)))
+            signatureR = [M_right.count_chords(gen) for gen in M_right.generators]
+            signatureR = list(map(max, zip(*signatureR)))
+            print(signatureL, signatureR, i, j)
+            print(left, right)
+
             # Computes the bordered invariant by gluing left_slot
             # to the corresponing slot on the right.
             M_left = tensor(M_left, left_index, M_right, right_index)
             left_slots = left_slots + right_slots
+            left = left_slots.copy()
 
         N = M_left
+
+        signature = [M_left.count_chords(gen) for gen in M_left.generators]
+        signature = list(map(max, zip(*signature)))
+
+        print(signature)
+        print(left_slots)
 
         # Stores positions of open edges (generators of pi_1)
         number_open_edges = len(left_slots) // 2
@@ -515,6 +531,7 @@ class SuturedGraph:
             else:
                 self.open_edges.append(slot2)
 
+            print(left_slots)
             N = N.HH(slot1_index, slot2_index)
 
         SFH_ranks = {}
