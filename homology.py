@@ -2,9 +2,10 @@
 # Strands Algebra Homology
 #-----------------------------------------------------------------------------#
 from basics import *
+from typing import NamedTuple
 
 
-class HomologyGenerator:
+class HomologyGenerator(NamedTuple):
     '''
     This class encodes the generators of the homology of A(infty,k).
 
@@ -61,9 +62,8 @@ class HomologyGenerator:
 
     '''
 
-    def __init__(self, left_set, right_set):
-        self.left_set = left_set
-        self.right_set = right_set
+    left_set: int
+    right_set: int
 
     def __eq__(self, other):
         if self is 0 or self.is_zero():
