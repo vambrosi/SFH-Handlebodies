@@ -74,6 +74,9 @@ class HomologyGenerator(NamedTuple):
             return self.left_set == other.left_set \
                 and self.right_set == other.right_set
 
+    def __ne__(self, other):
+        return not self==other
+
     def __repr__(self):
         if self.left_set == 0:
             return '\u2205'
